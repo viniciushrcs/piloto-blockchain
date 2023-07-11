@@ -1,0 +1,231 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+
+---
+General:
+  ListenAddress: 0.0.0.0
+  ListenPort: 6050
+  TLS:
+    Enabled: false
+    PrivateKey: tls/server.key
+    Certificate: tls/server.crt
+    RootCAs:
+      - tls/ca.crt
+    ClientAuthRequired: false
+    ClientRootCAs:
+  Keepalive:
+    # ServerMinInterval is the minimum permitted time between client pings.
+    # If clients send pings more frequently, the server will
+    # disconnect them.
+    ServerMinInterval: 60s
+    # ServerInterval is the time between pings to clients.
+    ServerInterval: 7200s
+    # ServerTimeout is the duration the server waits for a response from
+    # a client before closing the connection.
+    ServerTimeout: 20s
+  # Cluster settings for ordering service nodes that communicate with other ordering service nodes
+  # such as Raft based ordering service.
+  Cluster:
+    SendBufferSize: 10
+    ClientCertificate:
+    ClientPrivateKey:
+    ListenPort:
+    ListenAddress:
+    ServerCertificate:
+    ServerPrivateKey:
+
+  BootstrapMethod: none
+
+  BootstrapFile: 
+
+
+  LocalMSPDir: msp
+  LocalMSPID: OrdererMSP
+
+  Profile:
+    Enabled: false
+    Address: 0.0.0.0:6060
+
+  BCCSP:
+    Default: SW
+
+    SW:
+      Hash: SHA2
+      Security: 256
+      # Location of key store. If this is unset, a location will be
+      # chosen using: 'LocalMSPDir'/keystore
+      FileKeyStore:
+        KeyStore:
+
+    # Settings for the PKCS#11 crypto provider (i.e. when DEFAULT: PKCS11)
+    PKCS11:
+      # Location of the PKCS11 module library
+      Library:
+      # Token Label
+      Label:
+      # User PIN
+      Pin:
+      Hash:
+      Security:
+      FileKeyStore:
+        KeyStore:
+
+  # Authentication contains configuration parameters related to authenticating
+  # client messages
+  Authentication:
+    # the acceptable difference between the current server time and the
+    # client's time as specified in a client request message
+    TimeWindow: 15m
+
+
+################################################################################
+#
+#   SECTION: File Ledger
+#
+#   - This section applies to the configuration of the file ledger.
+#
+################################################################################
+FileLedger:
+
+  # Location: The directory to store the blocks in.
+  Location: /var/hyperledger/production/orderer
+
+
+Debug:
+
+  # BroadcastTraceDir when set will cause each request to the Broadcast service
+  # for this orderer to be written to a file in this directory
+  BroadcastTraceDir:
+
+  # DeliverTraceDir when set will cause each request to the Deliver service
+  # for this orderer to be written to a file in this directory
+  DeliverTraceDir:
+
+################################################################################
+#
+#   Operations Configuration
+#
+#   - This configures the operations server endpoint for the orderer
+#
+################################################################################
+Operations:
+  # host and port for the operations server
+  ListenAddress: 0.0.0.0:8443
+
+  # TLS configuration for the operations endpoint
+  TLS:
+    # TLS enabled
+    Enabled: false
+
+    # Certificate is the location of the PEM encoded TLS certificate
+    Certificate:
+
+    # PrivateKey points to the location of the PEM-encoded key
+    PrivateKey:
+
+    # Most operations service endpoints require client authentication when TLS
+    # is enabled. ClientAuthRequired requires client certificate authentication
+    # at the TLS layer to access all resources.
+    ClientAuthRequired: false
+
+    # Paths to PEM encoded ca certificates to trust for client authentication
+    ClientRootCAs: []
+
+################################################################################
+#
+#   Metrics Configuration
+#
+#   - This configures metrics collection for the orderer
+#
+################################################################################
+Metrics:
+  # The metrics provider is one of statsd, prometheus, or disabled
+  Provider: disabled
+
+  # The statsd configuration
+  Statsd:
+    # network type: tcp or udp
+    Network: udp
+
+    # the statsd server address
+    Address: 127.0.0.1:8125
+
+    # The interval at which locally cached counters and gauges are pushed
+    # to statsd; timings are pushed immediately
+    WriteInterval: 30s
+
+    # The prefix is prepended to all emitted statsd metrics
+    Prefix:
+
+################################################################################
+#
+#   Admin Configuration
+#
+#   - This configures the admin server endpoint for the orderer
+#
+################################################################################
+Admin:
+  # host and port for the admin server
+  ListenAddress: 0.0.0.0:9443
+
+  # TLS configuration for the admin endpoint
+  TLS:
+    # TLS enabled
+    Enabled: false
+
+    # Certificate is the location of the PEM encoded TLS certificate
+    Certificate:
+
+    # PrivateKey points to the location of the PEM-encoded key
+    PrivateKey:
+
+    # Most admin service endpoints require client authentication when TLS
+    # is enabled. ClientAuthRequired requires client certificate authentication
+    # at the TLS layer to access all resources.
+    #
+    # NOTE: When TLS is enabled, the admin endpoint requires mutual TLS. The
+    # orderer will panic on startup if this value is set to false.
+    ClientAuthRequired: true
+
+    # Paths to PEM encoded ca certificates to trust for client authentication
+    ClientRootCAs: []
+
+################################################################################
+#
+#   Channel participation API Configuration
+#
+#   - This provides the channel participation API configuration for the orderer.
+#   - Channel participation uses the ListenAddress and TLS settings of the Admin
+#     service.
+#
+################################################################################
+ChannelParticipation:
+  # Channel participation API is enabled.
+  Enabled: true
+
+  # The maximum size of the request body when joining a channel.
+  MaxRequestBodySize: 1 MB
+
+
+################################################################################
+#
+#   Consensus Configuration
+#
+#   - This section contains config options for a consensus plugin. It is opaque
+#     to orderer, and completely up to consensus implementation to make use of.
+#
+################################################################################
+Consensus:
+  # The allowed key-value pairs here depend on consensus plugin. For etcd/raft,
+  # we use following options:
+
+  # WALDir specifies the location at which Write Ahead Logs for etcd/raft are
+  # stored. Each channel will have its own subdir named after channel ID.
+  WALDir: /var/hyperledger/production/orderer1/etcdraft/wal
+
+  # SnapDir specifies the location at which snapshots for etcd/raft are
+  # stored. Each channel will have its own subdir named after channel ID.
+  SnapDir: /var/hyperledger/production/orderer1/etcdraft/snapshot

@@ -1,0 +1,157 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: <%= ordererOrg %>-orderer1-tls-cert
+  namespace: ${ORG0_NS}
+spec:
+  isCA: false
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  dnsNames:
+    - localhost
+    - <%= ordererOrg %>-orderer1
+    - <%= ordererOrg %>-orderer1.${ORG0_NS}.svc.cluster.local
+    - <%= ordererOrg %>-orderer1.${DOMAIN}
+    - <%= ordererOrg %>-orderer1-admin.${DOMAIN}
+  ipAddresses:
+    - 127.0.0.1
+  secretName: <%= ordererOrg %>-orderer1-tls-cert
+  issuerRef:
+    name: <%= ordererOrg %>-tls-cert-issuer
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <%= ordererOrg %>-orderer1-env
+data:
+  FABRIC_CFG_PATH: /var/hyperledger/fabric/config
+  FABRIC_LOGGING_SPEC: DEBUG 
+  ORDERER_GENERAL_LISTENADDRESS: 0.0.0.0
+  ORDERER_GENERAL_LISTENPORT: "6050"
+  ORDERER_GENERAL_LOCALMSPID: OrdererMSP
+  ORDERER_GENERAL_LOCALMSPDIR: /var/hyperledger/fabric/organizations/ordererOrganizations/<%= ordererOrg %>.example.com/orderers/<%= ordererOrg %>-orderer1.<%= ordererOrg %>.example.com/msp
+  ORDERER_GENERAL_TLS_ENABLED: "true"
+  ORDERER_GENERAL_TLS_CERTIFICATE: /var/hyperledger/fabric/config/tls/tls.crt
+  ORDERER_GENERAL_TLS_ROOTCAS: /var/hyperledger/fabric/config/tls/ca.crt
+  ORDERER_GENERAL_TLS_PRIVATEKEY: /var/hyperledger/fabric/config/tls/tls.key
+  ORDERER_GENERAL_BOOTSTRAPMETHOD: none
+  ORDERER_ADMIN_TLS_ENABLED: "true"
+  ORDERER_ADMIN_TLS_CERTIFICATE: /var/hyperledger/fabric/config/tls/tls.crt
+  ORDERER_ADMIN_TLS_ROOTCAS: /var/hyperledger/fabric/config/tls/ca.crt
+  ORDERER_ADMIN_TLS_PRIVATEKEY: /var/hyperledger/fabric/config/tls/tls.key
+  # Authenticate client connections with the org's ecert / admin user enrollments
+  ORDERER_ADMIN_TLS_CLIENTROOTCAS: "[/var/hyperledger/fabric/organizations/ordererOrganizations/<%= ordererOrg %>.example.com/orderers/<%= ordererOrg %>-orderer1.<%= ordererOrg %>.example.com/msp/cacerts/<%= ordererOrg %>-ca.pem]"
+  ORDERER_FILELEDGER_LOCATION: /var/hyperledger/fabric/data/orderer1
+  ORDERER_OPERATIONS_LISTENADDRESS: 0.0.0.0:8443
+  ORDERER_ADMIN_LISTENADDRESS: 0.0.0.0:9443
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: <%= ordererOrg %>-orderer1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: <%= ordererOrg %>-orderer1
+  template:
+    metadata:
+      labels:
+        app: <%= ordererOrg %>-orderer1
+    spec:
+      containers:
+        - name: main
+          image: ${FABRIC_CONTAINER_REGISTRY}/fabric-orderer:${FABRIC_VERSION}
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: <%= ordererOrg %>-orderer1-env
+          ports:
+            - containerPort: 6050
+            - containerPort: 8443
+            - containerPort: 9443
+          volumeMounts:
+            - name: fabric-volume
+              mountPath: /var/hyperledger
+            - name: fabric-config
+              mountPath: /var/hyperledger/fabric/config
+            - name: tls-cert-volume
+              mountPath: /var/hyperledger/fabric/config/tls
+              readOnly: true
+      volumes:
+        - name: fabric-volume
+          persistentVolumeClaim:
+            claimName: fabric-<%= ordererOrg %>
+        - name: fabric-config
+          configMap:
+            name: <%= ordererOrg %>-config
+        - name: tls-cert-volume
+          secret:
+            secretName: <%= ordererOrg %>-orderer1-tls-cert
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: <%= ordererOrg %>-orderer1
+spec:
+  ports:
+    - name: general
+      port: 6050
+      protocol: TCP
+    - name: operations
+      port: 8443
+      protocol: TCP
+    - name: admin
+      port: 9443
+      protocol: TCP
+  selector:
+    app: <%= ordererOrg %>-orderer1
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: 60s
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+  labels:
+    app: <%= ordererOrg %>-orderer1
+  name: <%= ordererOrg %>-orderer1
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: <%= ordererOrg %>-orderer1.${DOMAIN}
+      http:
+        paths:
+          - backend:
+              service:
+                name: <%= ordererOrg %>-orderer1
+                port:
+                  name: general
+            path: /
+            pathType: ImplementationSpecific
+    - host: <%= ordererOrg %>-orderer1-admin.${DOMAIN}
+      http:
+        paths:
+          - backend:
+              service:
+                name: <%= ordererOrg %>-orderer1
+                port:
+                  name: admin
+            path: /
+            pathType: ImplementationSpecific
+  tls:
+    - hosts:
+        - <%= ordererOrg %>-orderer1.${DOMAIN}
+    - hosts:
+        - <%= ordererOrg %>-orderer1-admin.${DOMAIN}
