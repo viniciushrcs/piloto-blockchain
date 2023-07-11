@@ -1,6 +1,5 @@
 import express from 'express';
 import multer from 'multer';
-import fs from 'fs';
 import path from 'path';
 import tar from 'tar';
 import {
@@ -18,14 +17,16 @@ const upload = multer({ dest: 'uploads/' });
 
 router.post('/deploy-chaincode', upload.single('file'), async (req, res) => {
   const specs: DeployChaincodePayload = req.body;
+  specs.peerOrganizations = JSON.parse(
+    specs.peerOrganizations as unknown as string
+  );
+
   if (!req.file) {
     res.status(400).send('Nenhum arquivo foi carregado');
     return;
   }
 
   const destinationDir = path.join(__dirname, '../../');
-  const chaincodeName = `chaincode-${specs.chaincodeName}`;
-  const destinationFile = path.join(destinationDir, chaincodeName);
 
   try {
     await tar.x({
@@ -33,15 +34,6 @@ router.post('/deploy-chaincode', upload.single('file'), async (req, res) => {
       cwd: destinationDir,
     });
 
-    const unzippedFolder = path.join(destinationDir, `${specs.chaincodeName}`);
-
-    if (fs.existsSync(unzippedFolder)) {
-      fs.renameSync(unzippedFolder, destinationFile);
-    } else {
-      throw new Error('A pasta descompactada não foi encontrada');
-    }
-
-    specs.chaincodeName = chaincodeName;
     await chaincodeDeploy(specs);
     res.status(200).send(`O chaincode ${specs.chaincodeName} foi deployado`);
   } catch (e) {

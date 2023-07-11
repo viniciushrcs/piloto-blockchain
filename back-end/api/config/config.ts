@@ -34,23 +34,23 @@ export const finalCommonFileNames = (ORG): CommonFileNames => ({
 });
 
 export const templateFolders = {
-  fabric_orderer_org_templates: `${__dirname}/yaml-templates/fabric/orderer_org`,
-  fabric_peer_org_templates: `${__dirname}/yaml-templates/fabric/peer_org`,
-  k8s_org_orderer_templates: `${__dirname}/yaml-templates/k8s/org_orderer`,
-  k8s_org_peer_templates: `${__dirname}/yaml-templates/k8s/org_peer`,
-  common_templates: `${__dirname}/yaml-templates/k8s/common`,
+  fabric_orderer_org_templates: `${__dirname}/../templates/fabric/orderer_org`,
+  fabric_peer_org_templates: `${__dirname}/../templates/fabric/peer_org`,
+  k8s_org_orderer_templates: `${__dirname}/../templates/k8s/org_orderer`,
+  k8s_org_peer_templates: `${__dirname}/../templates/k8s/org_peer`,
+  common_templates: `${__dirname}/../templates/k8s/common`,
 };
 
 export const destinationOrdFolders = (ORD_ORG): DestinationOrdFolders => ({
-  dest_dir_config_orderer: `${__dirname}/../config/${ORD_ORG}`,
-  dest_dir_orderer_org: `${__dirname}/../kube/${ORD_ORG}`,
+  dest_dir_config_orderer: `${__dirname}/../../config/${ORD_ORG}`,
+  dest_dir_orderer_org: `${__dirname}/../../kube/${ORD_ORG}`,
 });
 
 export const destinationCommonFolder = (): DestinationCommonFolder => ({
-  dest_dir_pvc: `${__dirname}/../kube`,
+  dest_dir_pvc: `${__dirname}/../../kube`,
 });
 
 export const destinationPeerFolders = (PEER_ORG): DestinationPeerFolders => ({
-  dest_dir_config_peer: `${__dirname}/../config/${PEER_ORG}`,
-  dest_dir_peer_org: `${__dirname}/../kube/${PEER_ORG}`,
+  dest_dir_config_peer: `${__dirname}/../../config/${PEER_ORG}`,
+  dest_dir_peer_org: `${__dirname}/../../kube/${PEER_ORG}`,
 });
