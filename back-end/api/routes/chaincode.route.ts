@@ -26,7 +26,7 @@ router.post('/deploy-chaincode', upload.single('file'), async (req, res) => {
     return;
   }
 
-  const destinationDir = path.join(__dirname, '../../');
+  const destinationDir = path.join(__dirname, '../../chaincodes');
 
   try {
     await tar.x({
