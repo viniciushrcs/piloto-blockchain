@@ -3,4 +3,7 @@ network.log
 network-debug.log 
 .env
 *.tgz
-buid/
+build/
+config/
+kube/
+api/uploads
