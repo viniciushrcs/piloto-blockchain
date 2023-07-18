@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: explorerdb
+spec:
+  selector:
+    app: explorerdb
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: explorerdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: explorerdb
+  template:
+    metadata:
+      labels:
+        app: explorerdb
+    spec:
+      containers:
+        - name: explorerdb
+          image: hyperledger/explorer-db:latest
+          env:
+            - name: DATABASE_DATABASE
+              value: fabricexplorer
+            - name: DATABASE_USERNAME
+              value: hppoc
+            - name: DATABASE_PASSWORD
+              value: password
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: pgdata
+        persistentVolumeClaim:
+          claimName: pgdata
+---
