@@ -93,7 +93,7 @@ function deploy_chaincode() {
   local PEER_ORGS_INFO=("$@")
   local cc_name=$CHAINCODE_NAME
   local cc_label=$CHAINCODE_NAME
-  local cc_folder=$(absolute_path $CHAINCODE_PATH)
+  local cc_folder=$(absolute_path chaincodes/$CHAINCODE_PATH)
   local temp_folder=$(mktemp -d)
   local cc_package=${temp_folder}/${cc_name}.tgz
 
