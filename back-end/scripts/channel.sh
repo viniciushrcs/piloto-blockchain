@@ -258,7 +258,7 @@ function create_genesis_block() {
   cat ${PWD}/config/$1/configtx-template.yaml | envsubst > ${TEMP_DIR}/configtx.yaml
   FABRIC_CFG_PATH=${TEMP_DIR} \
     configtxgen \
-      -profile      TwoOrgsApplicationGenesis \
+      -profile      ApplicationGenesis \
       -channelID    $CHANNEL_NAME \
       -outputBlock  ${TEMP_DIR}/genesis_block.pb
 
