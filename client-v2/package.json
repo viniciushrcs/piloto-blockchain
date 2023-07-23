@@ -9,6 +9,16 @@
     "lint": "next lint",
     "prepare": "cd .. && husky install client-v2/.husky"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**/*": [
+      "npm run lint --fix"
+    ]
+  },
   "dependencies": {
     "@types/node": "20.4.4",
     "@types/react": "18.2.15",
@@ -24,6 +34,7 @@
     "typescript": "5.1.6"
   },
   "devDependencies": {
-    "husky": "^8.0.3"
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.3"
   }
 }
