@@ -8,7 +8,8 @@ import {
   Group,
   Burger,
   Paper,
-  Transition
+  Transition,
+  Accordion
 } from '@mantine/core';
 import { IconSettings, IconHome } from '@tabler/icons-react';
 import Link from 'next/link';
