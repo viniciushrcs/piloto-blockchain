@@ -1,3 +1,9 @@
+import { Container } from '@mantine/core';
+
 export default function Home() {
-  return <p>Olá!</p>;
+  return (
+    <Container size={'xl'}>
+      <p>Olá!</p>
+    </Container>
+  );
 }

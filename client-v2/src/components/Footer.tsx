@@ -12,9 +12,8 @@ import {
   IconBrandYoutube,
   IconBrandInstagram
 } from '@tabler/icons-react';
-import logo from '@/assets/logo.png';
 import Link from 'next/link';
-import Image from 'next/image';
+import Logo from '@/components/Logo';
 
 const useStyles = createStyles((theme) => ({
   footer: {
@@ -174,7 +173,7 @@ export default function Footer() {
       <Container className={classes.inner} size={'xl'}>
         <div className={classes.logo}>
           <Link href={'#'}>
-            <Image src={logo} width={110} alt="Logo RNP" />
+            <Logo />
           </Link>
           <Text size="xs" color="dimmed" className={classes.description}>
             Organização Social do MCTI.

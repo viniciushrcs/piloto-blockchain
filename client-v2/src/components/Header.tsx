@@ -13,8 +13,7 @@ import {
 import { IconSettings, IconHome } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useDisclosure } from '@mantine/hooks';
-import logo from '@/assets/logo.png';
-import Image from 'next/image';
+import Logo from '@/components/Logo';
 
 const HEADER_HEIGHT = rem(70);
 
@@ -139,7 +138,7 @@ export default function Header() {
     <MantineHeader height={HEADER_HEIGHT} mb={20} className={classes.root}>
       <Container className={classes.header} size={'xl'}>
         <Link href={'#'}>
-          <Image src={logo} width={110} alt="Logo RNP" />
+          <Logo />
         </Link>
         <Group spacing={5} className={classes.links}>
           {items}
