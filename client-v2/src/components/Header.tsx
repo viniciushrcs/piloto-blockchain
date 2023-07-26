@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { useDisclosure } from '@mantine/hooks';
 import Logo from '@/components/Logo';
 import { useRouter } from 'next/router';
+import { DASHBOARD_PATH, SETTINGS_PATH } from '@/utils/constants';
 
 const HEADER_HEIGHT = rem(70);
 
@@ -104,16 +105,16 @@ export default function Header() {
   const links = useMemo(
     () => [
       {
-        link: '/dashboard',
+        link: DASHBOARD_PATH,
         label: 'Dashboard',
         icon: IconHome,
-        isActive: currentLink === '/dashboard'
+        isActive: currentLink === DASHBOARD_PATH
       },
       {
-        link: '/dashboard/settings',
+        link: SETTINGS_PATH,
         label: 'Configurações',
         icon: IconSettings,
-        isActive: currentLink === '/dashboard/settings'
+        isActive: currentLink === SETTINGS_PATH
       }
     ],
     [currentLink]
