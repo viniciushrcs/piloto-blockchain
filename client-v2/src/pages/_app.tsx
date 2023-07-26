@@ -10,8 +10,22 @@ export default function App({ Component, pageProps }: AppProps) {
       withGlobalStyles
       withNormalizeCSS
       theme={{
-        /** Put your mantine theme override here */
-        colorScheme: 'light'
+        defaultRadius: 'md',
+        primaryColor: 'blue',
+        colors: {
+          blue: [
+            '#ebf8ff',
+            '#d1ebf7',
+            '#b7ddec',
+            '#9dcfe2',
+            '#83c2d8',
+            '#69b4cd',
+            '#4f97c3', // default
+            '#3f7ea7',
+            '#2f658b',
+            '#1f4c6f'
+          ]
+        }
       }}
     >
       <div className="flex flex-col min-h-screen">
