@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import {
   createStyles,
   Header as MantineHeader,
@@ -14,6 +14,7 @@ import { IconSettings, IconHome } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useDisclosure } from '@mantine/hooks';
 import Logo from '@/components/Logo';
+import { useRouter } from 'next/router';
 
 const HEADER_HEIGHT = rem(70);
 
@@ -96,20 +97,27 @@ const useStyles = createStyles((theme) => ({
 }));
 
 export default function Header() {
-  const [links] = useState([
-    {
-      link: '/dashboard',
-      label: 'Dashboard',
-      icon: IconHome,
-      isActive: ''
-    },
-    {
-      link: '/settings',
-      label: 'Configurações',
-      icon: IconSettings,
-      isActive: ''
-    }
-  ]);
+  const router = useRouter();
+
+  const currentLink = router.pathname;
+
+  const links = useMemo(
+    () => [
+      {
+        link: '/dashboard',
+        label: 'Dashboard',
+        icon: IconHome,
+        isActive: currentLink === '/dashboard'
+      },
+      {
+        link: '/dashboard/settings',
+        label: 'Configurações',
+        icon: IconSettings,
+        isActive: currentLink === '/dashboard/settings'
+      }
+    ],
+    [currentLink]
+  );
 
   const { classes, cx } = useStyles();
 
