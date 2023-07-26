@@ -10,7 +10,9 @@ import {
 import {
   IconBrandTwitter,
   IconBrandYoutube,
-  IconBrandInstagram
+  IconBrandInstagram,
+  IconBrandFacebook,
+  IconBrandLinkedin
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import Logo from '@/components/Logo';
@@ -80,6 +82,7 @@ const useStyles = createStyles((theme) => ({
     fontSize: theme.fontSizes.sm,
     paddingTop: rem(3),
     paddingBottom: rem(3),
+    textDecoration: 'none',
 
     '&:hover': {
       textDecoration: 'underline'
@@ -122,42 +125,66 @@ export default function Footer() {
 
   const [data] = useState([
     {
-      title: 'Product',
+      title: 'Recursos Educacionais',
       links: [
-        { label: 'Features', link: '#' },
-        { label: 'Pricing', link: '#' },
-        { label: 'Contact', link: '#' }
+        {
+          label: 'Internet Avançada',
+          link: 'https://www.rnp.br/busca?term=internet+avan%C3%A7ada&sort_by=created&range=all'
+        },
+        {
+          label: 'Serviços Colaborativos',
+          link: 'https://www.rnp.br/busca?term=Servi%C3%A7os+Colaborativos&sort_by=created&range=all'
+        },
+        {
+          label: 'Plataforma de Conhecimento',
+          link: 'https://www.rnp.br/busca?term=Plataforma+de+Conhecimento&sort_by=created&range=all'
+        }
       ]
     },
     {
-      title: 'Resources',
+      title: 'Pesquisa e Inovação',
       links: [
-        { label: 'Docs', link: '#' },
-        { label: 'Blog', link: '#' },
-        { label: 'FAQ', link: '#' }
+        { label: 'Projetos em Destaque', link: 'https://www.rnp.br/projetos' },
+        {
+          label: 'Laboratórios Avançados',
+          link: 'https://www.rnp.br/busca?term=Laborat%C3%B3rios+Avan%C3%A7ados&sort_by=created&range=all'
+        },
+        {
+          label: 'Soluções Tecnológicas',
+          link: 'https://www.rnp.br/busca?term=Solu%C3%A7%C3%B5es+Tecnol%C3%B3gicas&sort_by=created&range=all'
+        }
       ]
     },
     {
-      title: 'Company',
+      title: 'Segurança e Privacidade',
       links: [
-        { label: 'About', link: '#' },
-        { label: 'Privacy Policy', link: '#' },
-        { label: 'Terms of Service', link: '#' }
+        {
+          label: 'Proteção de Dados',
+          link: 'https://www.rnp.br/busca?term=Dados&sort_by=created&range=all'
+        },
+        {
+          label: 'Cibersegurança',
+          link: 'https://www.rnp.br/busca?term=Ciberseguran%C3%A7a&sort_by=created&range=all'
+        },
+        {
+          label: 'Políticas de Acesso',
+          link: 'https://www.rnp.br/sistema-rnp/ferramentas/documentos/politica-cookies'
+        }
       ]
     }
   ]);
 
   const groups = data.map((group) => {
     const links = group.links.map((link, index) => (
-      <Text<'a'>
+      <a
         key={index}
         className={classes.link}
-        component="a"
         href={link.link}
-        onClick={(event) => event.preventDefault()}
+        target="_blank"
+        rel="noopener noreferrer"
       >
         {link.label}
-      </Text>
+      </a>
     ));
 
     return (
@@ -187,13 +214,49 @@ export default function Footer() {
         </Text>
         <Group spacing={0} className={classes.social} position="right" noWrap>
           <ActionIcon size="lg">
-            <IconBrandTwitter size="1.05rem" stroke={1.5} />
+            <a
+              href="https://www.linkedin.com/company/redernp"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <IconBrandLinkedin size="1.05rem" stroke={1.5} />
+            </a>
           </ActionIcon>
           <ActionIcon size="lg">
-            <IconBrandYoutube size="1.05rem" stroke={1.5} />
+            <a
+              href="https://www.facebook.com/RedeNacionaldeEnsinoePesquisaRNP"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <IconBrandFacebook size="1.05rem" stroke={1.5} />
+            </a>
           </ActionIcon>
           <ActionIcon size="lg">
-            <IconBrandInstagram size="1.05rem" stroke={1.5} />
+            <a
+              href="https://twitter.com/Rede_RNP"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <IconBrandTwitter size="1.05rem" stroke={1.5} />
+            </a>
+          </ActionIcon>
+          <ActionIcon size="lg">
+            <a
+              href="https://www.youtube.com/c/RedeRNP"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <IconBrandYoutube size="1.05rem" stroke={1.5} />
+            </a>
+          </ActionIcon>
+          <ActionIcon size="lg">
+            <a
+              href="https://www.instagram.com/redernp"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <IconBrandInstagram size="1.05rem" stroke={1.5} />
+            </a>
           </ActionIcon>
         </Group>
       </Container>
