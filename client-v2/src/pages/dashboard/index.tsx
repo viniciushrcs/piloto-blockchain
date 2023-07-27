@@ -24,6 +24,7 @@ import {
 } from '@mantine/core';
 import { hasLength, useForm } from '@mantine/form';
 import {
+  IconCheck,
   IconCircleDashed,
   IconGitBranch,
   IconGitCommit,
@@ -63,16 +64,7 @@ const useStyles = createStyles((theme) => ({
 export default function Index() {
   const { classes } = useStyles();
 
-  const firstStep = useRef<HTMLButtonElement>(null);
-
-  const stepper = useRef<HTMLDivElement>(null);
-
-  const [active, setActive] = useState(0);
-
-  const nextStep = () =>
-    setActive((current) => (current < 3 ? current + 1 : current));
-  const prevStep = () =>
-    setActive((current) => (current > 0 ? current - 1 : current));
+  const [step, setActive] = useState(0);
 
   const form = useForm<FormValues>({
     initialValues: {
@@ -87,13 +79,15 @@ export default function Index() {
     }
   });
 
+  const nextStep = () =>
+    setActive((current) => (current < 5 ? current + 1 : current));
+
+  const prevStep = () =>
+    setActive((current) => (current > 0 ? current - 1 : current));
+
   const onSubmit = async (values: FormValues) => {
     console.log(values);
   };
-
-  useEffect(() => {
-    console.log(active);
-  }, [active]);
 
   return (
     <Container size={'xl'}>
@@ -109,53 +103,42 @@ export default function Index() {
           </Group>
         </Grid.Col>
         <Grid.Col md={3}>
-          {/* <Timeline active={-1} bulletSize={24} lineWidth={2}>
-            <Timeline.Item
-              // CircleCheck
-              bullet={<IconCircleDashed size={12} />}
-              title="Nova organização"
-              lineVariant="dashed"
-            >
-              <Text color="dimmed" size="sm">
-                Preencha os dados da nova organização no formulário ao lado
-              </Text>
-            </Timeline.Item>
-            <Timeline.Item
-              bullet={<IconCircleDashed size={12} />}
-              title="Resumo"
-              lineVariant="dashed"
-            >
-              <Text color="dimmed" size="sm">
-                Ao lado você pode ver um resumo dos dados das organizações que
-                serão criadas
-              </Text>
-            </Timeline.Item>
-            <Timeline.Item
-              title="Processamento"
-              bullet={<IconCircleDashed size={12} />}
-              lineVariant="dashed"
-            >
-              <Text color="dimmed" size="sm">
-                Aguarde enquanto o processamento é realizado
-              </Text>
-            </Timeline.Item>
-            <Timeline.Item
-              title="Concluído"
-              bullet={<IconCircleDashed size={12} />}
-            >
-              <Text color="dimmed" size="sm">
-                A rede foi criada com sucesso!
-              </Text>
-            </Timeline.Item>
-          </Timeline> */}
-          <Stepper ref={stepper} active={active} orientation="vertical">
-            <Stepper.Step label="First step" ref={firstStep} />
-            <Stepper.Step label="Second step" />
+          <Stepper
+            size="sm"
+            active={step}
+            orientation="vertical"
+            completedIcon={<IconCheck size={26} />}
+          >
+            <Stepper.Step
+              label="Definição da plataforma"
+              description="Escolha a plataforma que será utilizada para a criação da rede Blockchain"
+              icon={<IconCircleDashed size={20} />}
+            />
+            <Stepper.Step
+              label="Definição dos participantes"
+              description="Preencha os dados da nova organização no formulário ao lado"
+              icon={<IconCircleDashed size={20} />}
+            />
+            <Stepper.Step
+              label="Resumo"
+              description="Ao lado você pode ver um resumo dos dados das organizações que serão criadas"
+              icon={<IconCircleDashed size={20} />}
+            />
+            <Stepper.Step
+              label="Processamento"
+              description="Aguarde enquanto a rede é criada"
+              icon={<IconCircleDashed size={20} />}
+            />
+            <Stepper.Step
+              label="Concluído"
+              description="A rede foi criada com sucesso!"
+              icon={<IconCircleDashed size={20} />}
+            />
           </Stepper>
         </Grid.Col>
         <Grid.Col md={9}>
           <Box
-            hidden={active !== 0}
+            hidden={step !== 0}
             sx={(theme) => ({
               backgroundColor:
                 theme.colorScheme === 'dark'
