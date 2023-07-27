@@ -57,7 +57,7 @@ const useStyles = createStyles((theme) => ({
   }
 }));
 
-export default function Home() {
+export default function Index() {
   const { classes } = useStyles();
 
   const form = useForm<FormValues>({
