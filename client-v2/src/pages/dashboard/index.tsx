@@ -1,19 +1,12 @@
-import QuantityInput from '@/components/QuantityInput';
+import { useState } from 'react';
 import {
-  Anchor,
   Box,
   Button,
-  Checkbox,
   Container,
-  LoadingOverlay,
-  Paper,
-  PasswordInput,
   TextInput,
   Text,
   Tooltip,
-  ActionIcon,
   Grid,
-  Timeline,
   Title,
   Center,
   createStyles,
@@ -26,14 +19,8 @@ import { hasLength, useForm } from '@mantine/form';
 import {
   IconCheck,
   IconCircleDashed,
-  IconGitBranch,
-  IconGitCommit,
-  IconGitPullRequest,
-  IconInfoCircle,
-  IconMessageDots,
-  IconQuestionMark
+  IconInfoCircle
 } from '@tabler/icons-react';
-import { useEffect, useRef, useState } from 'react';
 
 type FormValues = {
   name: string;
