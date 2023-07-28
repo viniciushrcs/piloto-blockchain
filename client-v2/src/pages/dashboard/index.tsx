@@ -111,6 +111,14 @@ export default function Index() {
   const prevStep = () =>
     setActive((current) => (current > 0 ? current - 1 : current));
 
+  const handleEdit = (id: number) => {
+    const participant = participants.find((p) => p.id === id);
+
+    if (participant) {
+      step2Form.setValues(participant);
+    }
+  };
+
   const handleDelete = (id: number) => {
     setParticipants((prevParticipants) =>
       prevParticipants.filter((participant) => participant.id !== id)
@@ -123,13 +131,19 @@ export default function Index() {
   };
 
   const onSubmitStep2 = async (values: Step2FormValues) => {
-    const randomId = Math.floor(Math.random() * 1000000);
+    if (values.id) {
+      const newParticipants = participants.map((participant) =>
+        participant.id === values.id ? values : participant
+      );
 
-    const valuesWithId = { ...values, id: randomId };
+      setParticipants(newParticipants);
+    } else {
+      const randomId = Math.floor(Math.random() * 1000000);
 
-    console.log(valuesWithId);
+      const valuesWithId = { ...values, id: randomId };
 
-    setParticipants((prev) => [...prev, valuesWithId]);
+      setParticipants((prev) => [...prev, valuesWithId]);
+    }
 
     step2Form.reset();
   };
@@ -267,7 +281,11 @@ export default function Index() {
                       </td>
                       <td>
                         <Group spacing={0} position="right">
-                          <ActionIcon>
+                          <ActionIcon
+                            onClick={() =>
+                              participant?.id && handleEdit(participant.id)
+                            }
+                          >
                             <IconPencil size="1rem" stroke={1.5} />
                           </ActionIcon>
                           <ActionIcon
