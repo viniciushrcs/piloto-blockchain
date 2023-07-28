@@ -13,20 +13,16 @@ import {
   rem,
   Select,
   Stepper,
-  Group
+  Group,
+  Alert
 } from '@mantine/core';
-import { hasLength, useForm } from '@mantine/form';
+import { hasLength, isInRange, useForm } from '@mantine/form';
 import {
+  IconAlertCircle,
   IconCheck,
   IconCircleDashed,
   IconInfoCircle
 } from '@tabler/icons-react';
-
-type FormValues = {
-  name: string;
-  numberOfPeers: number;
-  isValidatingOrganization: boolean;
-};
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -48,21 +44,54 @@ const useStyles = createStyles((theme) => ({
   }
 }));
 
+type Step1FormValues = {
+  platform: string;
+};
+
+type Step2FormValues = {
+  name: string;
+  hasOrderingNode: number;
+  numberOfPeers: number;
+};
+
+type Data = Step1FormValues | Step2FormValues;
+
 export default function Index() {
   const { classes } = useStyles();
 
+  const [data, setData] = useState<Data | null>(null);
+
+  console.log(data);
+
   const [step, setActive] = useState(0);
 
-  const form = useForm<FormValues>({
+  const step1Form = useForm<Step1FormValues>({
     initialValues: {
-      name: '',
-      numberOfPeers: 0,
-      isValidatingOrganization: false
+      platform: ''
     },
     validate: {
-      name: hasLength({ min: 3 }),
-      isValidatingOrganization: (value) => value !== undefined,
-      numberOfPeers: (value) => value >= 0
+      platform: hasLength({ min: 3 })
+    }
+  });
+
+  const step2Form = useForm<Step2FormValues>({
+    initialValues: {
+      name: '',
+      hasOrderingNode: 0,
+      numberOfPeers: 0
+    },
+    validate: {
+      name: hasLength({ min: 3 }, 'O nome deve ter no mínimo 3 caracteres'),
+      hasOrderingNode: (value) =>
+        isInRange(
+          { min: 0, max: 1 },
+          'O valor informado precisa ser Sim ou Não'
+        )(parseInt(value.toString())),
+      numberOfPeers: (value) =>
+        isInRange(
+          { min: 1, max: 10 },
+          'O valor informado precisa estar entre 1 e 10'
+        )(parseInt(value.toString()))
     }
   });
 
@@ -72,22 +101,21 @@ export default function Index() {
   const prevStep = () =>
     setActive((current) => (current > 0 ? current - 1 : current));
 
-  const onSubmit = async (values: FormValues) => {
-    console.log(values);
+  const onSubmitStep1 = async (values: Step1FormValues) => {
+    setData(values);
+    nextStep();
+  };
+
+  const onSubmitStep2 = async (values: Step2FormValues) => {
+    setData((prev) => ({ ...prev, ...values }));
+    nextStep();
   };
 
   return (
     <Container size={'xl'}>
-      {/* criar título da página */}
       <Grid>
         <Grid.Col mb={10} md={12}>
           <Title order={1}>Crie sua rede Blockchain</Title>
-          <Group position="center" mt="xl">
-            <Button variant="default" onClick={prevStep}>
-              Back
-            </Button>
-            <Button onClick={nextStep}>Next step</Button>
-          </Group>
         </Grid.Col>
         <Grid.Col md={3}>
           <Stepper
@@ -126,22 +154,56 @@ export default function Index() {
         <Grid.Col md={9}>
           <Box
             hidden={step !== 0}
+            p="md"
             sx={(theme) => ({
-              backgroundColor:
-                theme.colorScheme === 'dark'
-                  ? theme.colors.dark[7]
-                  : theme.colors.gray[0],
-              borderRadius: theme.radius.md,
-              padding: theme.spacing.md,
-              border: `1px solid ${
-                theme.colorScheme === 'dark'
-                  ? theme.colors.dark[7]
-                  : theme.colors.gray[2]
-              }`
+              backgroundColor: theme.colors.gray[0],
+              border: `1px solid ${theme.colors.gray[2]}`,
+              borderRadius: theme.radius.md
             })}
             component="form"
-            onSubmit={form.onSubmit(onSubmit)}
+            onSubmit={step1Form.onSubmit(onSubmitStep1)}
+            className="space-y-4"
           >
+            <Title order={2}>Definição da plataforma</Title>
+            <Alert
+              icon={<IconAlertCircle size="1rem" />}
+              title="Atenção!"
+              color="yellow"
+              className="border border-yellow-500"
+            >
+              <Text>
+                Escolha a plataforma que será utilizada para a criação da rede
+                Blockchain. No momento, apenas a plataforma Hyperledger Fabric
+                está disponível.
+              </Text>
+            </Alert>
+            <Select
+              withinPortal
+              withAsterisk
+              mb="md"
+              data={['Hyperledger Fabric']}
+              placeholder="Selecione uma opção"
+              label="Plataforma"
+              classNames={classes}
+              {...step1Form.getInputProps('platform')}
+            />
+            <Button mt="xl" size="md" type="submit">
+              Próximo
+            </Button>
+          </Box>
+          <Box
+            hidden={step !== 1}
+            p="md"
+            sx={(theme) => ({
+              backgroundColor: theme.colors.gray[0],
+              border: `1px solid ${theme.colors.gray[2]}`,
+              borderRadius: theme.radius.md
+            })}
+            component="form"
+            onSubmit={step2Form.onSubmit(onSubmitStep2)}
+            className="space-y-4"
+          >
+            <Title order={2}>Definição dos participantes</Title>
             <TextInput
               withAsterisk
               mb="md"
@@ -162,29 +224,50 @@ export default function Index() {
                   </Text>
                 </Tooltip>
               }
-              {...form.getInputProps('name')}
+              {...step2Form.getInputProps('name')}
             />
             <Select
               withinPortal
+              withAsterisk
               mb="md"
-              data={['Sim', 'Não']}
+              data={[
+                { value: '1', label: 'Sim' },
+                { value: '0', label: 'Não' }
+              ]}
               placeholder="Selecione uma opção"
-              label="É uma organização validadora?"
+              label="Possui nó ordenador?"
               classNames={classes}
-              {...form.getInputProps('isValidatingOrganization')}
+              {...step2Form.getInputProps('hasOrderingNode')}
             />
             <Select
               withinPortal
+              withAsterisk
               mb="md"
-              data={['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']}
+              data={[
+                { value: '1', label: '1 peer' },
+                { value: '2', label: '2 peers' },
+                { value: '3', label: '3 peers' },
+                { value: '4', label: '4 peers' },
+                { value: '5', label: '5 peers' },
+                { value: '6', label: '6 peers' },
+                { value: '7', label: '7 peers' },
+                { value: '8', label: '8 peers' },
+                { value: '9', label: '9 peers' },
+                { value: '10', label: '10 peers' }
+              ]}
               placeholder="Selecione uma opção"
               label="Número de peers"
               classNames={classes}
-              {...form.getInputProps('numberOfPeers')}
+              {...step2Form.getInputProps('numberOfPeers')}
             />
-            <Button fullWidth mt="xl" size="md" type="submit">
-              Adicionar
-            </Button>
+            <Group>
+              <Button mt="xl" size="md" type="submit">
+                Adicionar
+              </Button>
+              <Button mt="xl" size="md" onClick={prevStep} variant="default">
+                Voltar
+              </Button>
+            </Group>
           </Box>
         </Grid.Col>
       </Grid>
