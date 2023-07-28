@@ -14,14 +14,21 @@ import {
   Select,
   Stepper,
   Group,
-  Alert
+  Alert,
+  ScrollArea,
+  Table,
+  ActionIcon,
+  Badge
 } from '@mantine/core';
 import { hasLength, isInRange, useForm } from '@mantine/form';
 import {
   IconAlertCircle,
   IconCheck,
   IconCircleDashed,
-  IconInfoCircle
+  IconInfoCircle,
+  IconPencil,
+  IconPlaystationCircle,
+  IconTrash
 } from '@tabler/icons-react';
 
 const useStyles = createStyles((theme) => ({
@@ -49,6 +56,7 @@ type Step1FormValues = {
 };
 
 type Step2FormValues = {
+  id?: number;
   name: string;
   hasOrderingNode: number;
   numberOfPeers: number;
@@ -62,6 +70,8 @@ export default function Index() {
   const [data, setData] = useState<Data | null>(null);
 
   console.log(data);
+
+  const [participants, setParticipants] = useState<Step2FormValues[]>([]);
 
   const [step, setActive] = useState(0);
 
@@ -101,14 +111,27 @@ export default function Index() {
   const prevStep = () =>
     setActive((current) => (current > 0 ? current - 1 : current));
 
+  const handleDelete = (id: number) => {
+    setParticipants((prevParticipants) =>
+      prevParticipants.filter((participant) => participant.id !== id)
+    );
+  };
+
   const onSubmitStep1 = async (values: Step1FormValues) => {
     setData(values);
     nextStep();
   };
 
   const onSubmitStep2 = async (values: Step2FormValues) => {
-    setData((prev) => ({ ...prev, ...values }));
-    nextStep();
+    const randomId = Math.floor(Math.random() * 1000000);
+
+    const valuesWithId = { ...values, id: randomId };
+
+    console.log(valuesWithId);
+
+    setParticipants((prev) => [...prev, valuesWithId]);
+
+    step2Form.reset();
   };
 
   return (
@@ -151,7 +174,7 @@ export default function Index() {
             />
           </Stepper>
         </Grid.Col>
-        <Grid.Col md={9}>
+        <Grid.Col md={9} className="space-y-4">
           <Box
             hidden={step !== 0}
             p="md"
@@ -190,6 +213,78 @@ export default function Index() {
             <Button mt="xl" size="md" type="submit">
               Próximo
             </Button>
+          </Box>
+          <Box
+            hidden={participants.length === 0}
+            p="sm"
+            sx={(theme) => ({
+              backgroundColor: theme.colors.gray[0],
+              border: `1px solid ${theme.colors.gray[2]}`,
+              borderRadius: theme.radius.md
+            })}
+          >
+            <ScrollArea>
+              <Table sx={{ minWidth: 800 }} verticalSpacing="sm">
+                <thead>
+                  <tr>
+                    <th>Organização</th>
+                    <th>Possui nó ordenador</th>
+                    <th>Número de peers</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {participants?.map((participant) => (
+                    <tr key={participant.id}>
+                      <td>
+                        <Group spacing="sm">
+                          <IconPlaystationCircle size={20} color={'gray'} />
+                          <Text fz="sm" fw={500}>
+                            {participant.name}
+                          </Text>
+                        </Group>
+                      </td>
+                      <td>
+                        <Badge
+                          color={
+                            participant.hasOrderingNode.toString() === '1'
+                              ? 'green'
+                              : 'red'
+                          }
+                          variant="outline"
+                        >
+                          {participant.hasOrderingNode.toString() === '1'
+                            ? 'Sim'
+                            : 'Não'}
+                        </Badge>
+                      </td>
+                      <td>
+                        <Text fz="sm" c="dimmed">
+                          {participant.numberOfPeers.toString() === '1'
+                            ? `${participant.numberOfPeers} peer`
+                            : `${participant.numberOfPeers} peers`}
+                        </Text>
+                      </td>
+                      <td>
+                        <Group spacing={0} position="right">
+                          <ActionIcon>
+                            <IconPencil size="1rem" stroke={1.5} />
+                          </ActionIcon>
+                          <ActionIcon
+                            color="red"
+                            onClick={() =>
+                              participant?.id && handleDelete(participant.id)
+                            }
+                          >
+                            <IconTrash size="1rem" stroke={1.5} />
+                          </ActionIcon>
+                        </Group>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </ScrollArea>
           </Box>
           <Box
             hidden={step !== 1}
