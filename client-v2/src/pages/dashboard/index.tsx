@@ -18,17 +18,22 @@ import {
   ScrollArea,
   Table,
   ActionIcon,
-  Badge
+  Badge,
+  Card,
+  RingProgress
 } from '@mantine/core';
 import { hasLength, isInRange, useForm } from '@mantine/form';
 import {
   IconAlertCircle,
   IconArrowLeft,
   IconArrowRight,
+  IconArrowUpRightCircle,
+  IconArtboard,
   IconCheck,
   IconCircleDashed,
   IconInfoCircle,
   IconPencil,
+  IconPlayerPlay,
   IconPlaystationCircle,
   IconTextPlus,
   IconTrash,
@@ -53,6 +58,25 @@ const useStyles = createStyles((theme) => ({
     paddingLeft: theme.spacing.sm,
     paddingTop: `calc(${theme.spacing.sm} / 2)`,
     zIndex: 1
+  },
+
+  card: {
+    backgroundColor:
+      theme.colorScheme === 'dark' ? theme.colors.dark[7] : theme.white
+  },
+
+  footer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: `${theme.spacing.sm} ${theme.spacing.lg}`,
+    borderTop: `${rem(1)} solid ${
+      theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[2]
+    }`
+  },
+
+  title: {
+    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
+    lineHeight: 1
   }
 }));
 
@@ -74,13 +98,13 @@ export default function Index() {
 
   const [data, setData] = useState<Data | null>(null);
 
-  console.log(data);
-
   const [buttonName, setButtonName] = useState('Adicionar participante');
 
   const [participants, setParticipants] = useState<Step2FormValues[]>([]);
 
   const [step, setActive] = useState(0);
+
+  const [loading, setLoading] = useState(false);
 
   const step1Form = useForm<Step1FormValues>({
     initialValues: {
@@ -171,6 +195,11 @@ export default function Index() {
     nextStep();
   };
 
+  const handleCreate = () => {
+    setLoading(true);
+    nextStep();
+  };
+
   return (
     <Container size={'xl'}>
       <Grid>
@@ -203,6 +232,7 @@ export default function Index() {
               label="Processamento"
               description="Aguarde enquanto a rede é criada"
               icon={<IconCircleDashed size={20} />}
+              loading={loading}
             />
             <Stepper.Step
               label="Concluído"
@@ -433,6 +463,101 @@ export default function Index() {
                 </Button>
               </div>
             </div>
+          </Box>
+          <Box
+            hidden={step !== 2}
+            p="md"
+            sx={(theme) => ({
+              backgroundColor: theme.colors.gray[0],
+              border: `1px solid ${theme.colors.gray[2]}`,
+              borderRadius: theme.radius.md
+            })}
+            component="div"
+            className="space-y-4"
+          >
+            <Title order={2}>Resumo</Title>
+            <Text>
+              Confira os dados das organizações que serão criadas na rede
+              Blockchain usando a plataforma{' '}
+              <strong>{data && (data as Step1FormValues).platform}</strong>.
+            </Text>
+
+            {participants?.map((participant) => (
+              <Card
+                key={participant.id}
+                withBorder
+                padding="lg"
+                className={classes.card}
+              >
+                <Card.Section className={classes.footer}>
+                  <div>
+                    <Text size="xs" color="dimmed">
+                      Nome da organização
+                    </Text>
+                    <Text weight={500} size="sm">
+                      {participant.name}
+                    </Text>
+                  </div>
+                  <div>
+                    <Text size="xs" color="dimmed">
+                      Possui nó ordenador?
+                    </Text>
+                    <Text weight={500} size="sm">
+                      {participant.hasOrderingNode.toString() === '1'
+                        ? 'Sim'
+                        : 'Não'}
+                    </Text>
+                  </div>
+                  <div>
+                    <Text size="xs" color="dimmed">
+                      Número de peers
+                    </Text>
+                    <Text weight={500} size="sm">
+                      {participant.numberOfPeers.toString() === '1'
+                        ? `${participant.numberOfPeers} peer`
+                        : `${participant.numberOfPeers} peers`}
+                    </Text>
+                  </div>
+                </Card.Section>
+              </Card>
+            ))}
+            <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between">
+              <Button
+                size="md"
+                onClick={handleCreate}
+                leftIcon={<IconArtboard size={20} />}
+              >
+                Iniciar criação da rede
+              </Button>
+              <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:space-x-4">
+                <Button
+                  size="md"
+                  onClick={prevStep}
+                  variant="default"
+                  className="w-full"
+                  leftIcon={<IconArrowLeft size={20} />}
+                >
+                  Voltar
+                </Button>
+              </div>
+            </div>
+          </Box>
+          <Box
+            hidden={step !== 3}
+            p="md"
+            sx={(theme) => ({
+              backgroundColor: theme.colors.gray[0],
+              border: `1px solid ${theme.colors.gray[2]}`,
+              borderRadius: theme.radius.md
+            })}
+            component="div"
+            className="space-y-4"
+          >
+            <Title order={2}>Processamento</Title>
+            <Text>
+              Aguarde enquanto a rede é criada. Esse processo pode levar alguns
+              minutos.
+            </Text>
           </Box>
         </Grid.Col>
       </Grid>
