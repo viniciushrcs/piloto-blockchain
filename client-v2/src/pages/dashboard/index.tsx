@@ -20,20 +20,19 @@ import {
   ActionIcon,
   Badge,
   Card,
-  RingProgress
+  Paper,
+  Progress
 } from '@mantine/core';
 import { hasLength, isInRange, useForm } from '@mantine/form';
 import {
   IconAlertCircle,
   IconArrowLeft,
   IconArrowRight,
-  IconArrowUpRightCircle,
   IconArtboard,
   IconCheck,
   IconCircleDashed,
   IconInfoCircle,
   IconPencil,
-  IconPlayerPlay,
   IconPlaystationCircle,
   IconTextPlus,
   IconTrash,
@@ -198,6 +197,8 @@ export default function Index() {
   const handleCreate = () => {
     setLoading(true);
     nextStep();
+
+    // TODO: Enviar request para a API
   };
 
   return (
@@ -558,6 +559,23 @@ export default function Index() {
               Aguarde enquanto a rede é criada. Esse processo pode levar alguns
               minutos.
             </Text>
+            <Paper radius="md" withBorder className={classes.card} p="xl">
+              <Text ta="center" fw={700} className={classes.title}>
+                Criando rede Blockchain
+              </Text>
+              <Group position="apart" mt="xs">
+                <Text fz="sm" color="dimmed">
+                  Progresso
+                </Text>
+                <Text fz="sm" color="dimmed">
+                  xxx%
+                </Text>
+              </Group>
+              <Progress value={62} mt={5} animate size="xl" />
+              <Group position="apart" mt="md">
+                <Badge size="sm">tempo decorrido</Badge>
+              </Group>
+            </Paper>
           </Box>
         </Grid.Col>
       </Grid>
