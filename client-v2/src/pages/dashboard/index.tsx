@@ -23,11 +23,14 @@ import {
 import { hasLength, isInRange, useForm } from '@mantine/form';
 import {
   IconAlertCircle,
+  IconArrowLeft,
+  IconArrowRight,
   IconCheck,
   IconCircleDashed,
   IconInfoCircle,
   IconPencil,
   IconPlaystationCircle,
+  IconTextPlus,
   IconTrash
 } from '@tabler/icons-react';
 
@@ -71,6 +74,8 @@ export default function Index() {
 
   console.log(data);
 
+  const [buttonName, setButtonName] = useState('Adicionar participante');
+
   const [participants, setParticipants] = useState<Step2FormValues[]>([]);
 
   const [step, setActive] = useState(0);
@@ -87,7 +92,7 @@ export default function Index() {
   const step2Form = useForm<Step2FormValues>({
     initialValues: {
       name: '',
-      hasOrderingNode: 0,
+      hasOrderingNode: -1,
       numberOfPeers: 0
     },
     validate: {
@@ -116,6 +121,7 @@ export default function Index() {
 
     if (participant) {
       step2Form.setValues(participant);
+      setButtonName('Salvar alterações');
     }
   };
 
@@ -137,6 +143,7 @@ export default function Index() {
       );
 
       setParticipants(newParticipants);
+      setButtonName('Adicionar participante');
     } else {
       const randomId = Math.floor(Math.random() * 1000000);
 
@@ -224,12 +231,18 @@ export default function Index() {
               classNames={classes}
               {...step1Form.getInputProps('platform')}
             />
-            <Button mt="xl" size="md" type="submit">
-              Próximo
+            <Button
+              size="md"
+              type="submit"
+              variant="default"
+              className="w-full md:w-1/4"
+              rightIcon={<IconArrowRight size={20} />}
+            >
+              Avançar
             </Button>
           </Box>
           <Box
-            hidden={participants.length === 0}
+            hidden={participants.length === 0 || step !== 1}
             p="sm"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -282,6 +295,7 @@ export default function Index() {
                       <td>
                         <Group spacing={0} position="right">
                           <ActionIcon
+                            color="blue"
                             onClick={() =>
                               participant?.id && handleEdit(participant.id)
                             }
@@ -373,14 +387,36 @@ export default function Index() {
               classNames={classes}
               {...step2Form.getInputProps('numberOfPeers')}
             />
-            <Group>
-              <Button mt="xl" size="md" type="submit">
-                Adicionar
+            <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between">
+              <Button
+                size="md"
+                type="submit"
+                leftIcon={<IconTextPlus size={20} />}
+              >
+                {buttonName}
               </Button>
-              <Button mt="xl" size="md" onClick={prevStep} variant="default">
-                Voltar
-              </Button>
-            </Group>
+              <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:space-x-4">
+                <Button
+                  size="md"
+                  onClick={prevStep}
+                  variant="default"
+                  className="w-full"
+                  leftIcon={<IconArrowLeft size={20} />}
+                >
+                  Voltar
+                </Button>
+                <Button
+                  size="md"
+                  onClick={nextStep}
+                  variant="default"
+                  color="blue"
+                  className="w-full"
+                  rightIcon={<IconArrowRight size={20} />}
+                >
+                  Avançar
+                </Button>
+              </div>
+            </div>
           </Box>
         </Grid.Col>
       </Grid>
