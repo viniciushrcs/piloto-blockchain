@@ -31,8 +31,10 @@ import {
   IconPencil,
   IconPlaystationCircle,
   IconTextPlus,
-  IconTrash
+  IconTrash,
+  IconX
 } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -153,6 +155,20 @@ export default function Index() {
     }
 
     step2Form.reset();
+  };
+
+  const handleNext = () => {
+    if (participants.length === 0) {
+      return notifications.show({
+        title: 'Atenção!',
+        message: 'É necessário adicionar pelo menos um participante',
+        color: 'red',
+        icon: <IconX size={20} />,
+        withBorder: true
+      });
+    }
+
+    nextStep();
   };
 
   return (
@@ -407,7 +423,7 @@ export default function Index() {
                 </Button>
                 <Button
                   size="md"
-                  onClick={nextStep}
+                  onClick={handleNext}
                   variant="default"
                   color="blue"
                   className="w-full"
