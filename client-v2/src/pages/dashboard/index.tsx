@@ -39,6 +39,9 @@ import {
   IconX
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { convertParticipants } from '@/utils/helpers';
+import { StartNetworkPayload } from '@/interfaces/fabricNetworkApiPayloads';
+import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -83,7 +86,7 @@ type Step1FormValues = {
   platform: string;
 };
 
-type Step2FormValues = {
+export type Step2FormValues = {
   id?: number;
   name: string;
   hasOrderingNode: number;
@@ -110,7 +113,7 @@ export default function Index() {
       platform: ''
     },
     validate: {
-      platform: hasLength({ min: 3 })
+      platform: hasLength({ min: 3 }, 'Você precisa selecionar uma plataforma')
     }
   });
 
@@ -180,6 +183,11 @@ export default function Index() {
     step2Form.reset();
   };
 
+  // export interface StartNetworkPayload {
+  //   ordererOrganization: string;
+  //   peerOrganizations: PeerOrganization[];
+  // }
+
   const handleNext = () => {
     if (participants.length === 0) {
       return notifications.show({
@@ -194,11 +202,23 @@ export default function Index() {
     nextStep();
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     setLoading(true);
-    nextStep();
+    // nextStep();
 
-    // TODO: Enviar request para a API
+    const formattedParticipants = convertParticipants(participants);
+
+    const payload: StartNetworkPayload = {
+      ordererOrganization:
+        participants.filter(
+          (participant) => participant.hasOrderingNode === 1
+        )[0]?.name || '',
+      peerOrganizations: formattedParticipants
+    };
+
+    console.log('new: ', payload);
+
+    await FabricNetworkApiInstance.startNetwork(payload);
   };
 
   return (
@@ -477,12 +497,18 @@ export default function Index() {
             className="space-y-4"
           >
             <Title order={2}>Resumo</Title>
-            <Text>
-              Confira os dados das organizações que serão criadas na rede
-              Blockchain usando a plataforma{' '}
-              <strong>{data && (data as Step1FormValues).platform}</strong>.
-            </Text>
-
+            <Alert
+              icon={<IconAlertCircle size="1rem" />}
+              title="Atenção!"
+              color="yellow"
+              className="border border-yellow-500"
+            >
+              <Text>
+                Confira os dados das organizações que serão criadas na rede
+                Blockchain usando a plataforma{' '}
+                <strong>{data && (data as Step1FormValues).platform}</strong>.
+              </Text>
+            </Alert>
             {participants?.map((participant) => (
               <Card
                 key={participant.id}

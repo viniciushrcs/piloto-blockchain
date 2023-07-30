@@ -92,6 +92,11 @@ function HomePage() {
     setShowModal(true);
 
     const payload = createPayload(ordererOrganization, peerOrganizations);
+
+    console.log("payload", payload);
+    console.log("peerOrganizations", peerOrganizations);
+    console.log("ordererOrganization", ordererOrganization);
+
     await FabricNetworkApi.startNetwork(payload);
   };
 
