@@ -16,9 +16,7 @@ export interface StartNetworkPayload {
   peerOrganizations: PeerOrganization[];
 }
 
-export interface CreateChannelPayload {
-  ordererOrganization: string;
-  peerOrgsToJoin: PeerOrganization[];
+export interface CreateChannelPayload extends StartNetworkPayload {
   channelName: string;
 }
 
