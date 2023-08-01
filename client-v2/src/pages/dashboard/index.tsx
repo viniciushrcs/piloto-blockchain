@@ -209,6 +209,20 @@ export default function Index() {
       });
     }
 
+    const hasOrderingNode = participants.filter(
+      (participant) => participant.hasOrderingNode == 1
+    );
+
+    if (hasOrderingNode.length === 0) {
+      return notifications.show({
+        title: 'Atenção!',
+        message: 'É necessário adicionar pelo menos um nó ordenador',
+        color: 'red',
+        icon: <IconX size={20} />,
+        withBorder: true
+      });
+    }
+
     nextStep();
   };
 
