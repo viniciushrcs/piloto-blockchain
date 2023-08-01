@@ -165,6 +165,21 @@ export default function Index() {
   };
 
   const onSubmitStep2 = async (values: Step2FormValues) => {
+    const hasOrderingNode = participants.filter(
+      (participant) =>
+        participant.hasOrderingNode == 1 && participant.id != values.id
+    );
+
+    if (values.hasOrderingNode == 1 && hasOrderingNode.length > 0) {
+      return notifications.show({
+        title: 'Atenção!',
+        message: 'Já existe um participante com nó ordenador',
+        color: 'red',
+        icon: <IconX size={20} />,
+        withBorder: true
+      });
+    }
+
     if (values.id) {
       const newParticipants = participants.map((participant) =>
         participant.id === values.id ? values : participant
@@ -183,11 +198,6 @@ export default function Index() {
     step2Form.reset();
   };
 
-  // export interface StartNetworkPayload {
-  //   ordererOrganization: string;
-  //   peerOrganizations: PeerOrganization[];
-  // }
-
   const handleNext = () => {
     if (participants.length === 0) {
       return notifications.show({
@@ -204,7 +214,7 @@ export default function Index() {
 
   const handleCreate = async () => {
     setLoading(true);
-    // nextStep();
+    nextStep();
 
     const formattedParticipants = convertParticipants(participants);
 
