@@ -47,6 +47,9 @@ function HomePage() {
 
     const getStatus = async () => {
       const response = await FabricNetworkApi.getStatus();
+
+      console.log(response.data);
+
       setStatus(response.data.message);
       if (!response.data.inProgress) {
         setLoading(false);
@@ -92,10 +95,6 @@ function HomePage() {
     setShowModal(true);
 
     const payload = createPayload(ordererOrganization, peerOrganizations);
-
-    console.log("payload", payload);
-    console.log("peerOrganizations", peerOrganizations);
-    console.log("ordererOrganization", ordererOrganization);
 
     await FabricNetworkApi.startNetwork(payload);
   };

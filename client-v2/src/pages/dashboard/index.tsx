@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -26,6 +26,7 @@ import {
 import { hasLength, isInRange, useForm } from '@mantine/form';
 import {
   IconAlertCircle,
+  IconArrowBackUp,
   IconArrowLeft,
   IconArrowRight,
   IconArtboard,
@@ -42,6 +43,7 @@ import { notifications } from '@mantine/notifications';
 import { convertParticipants } from '@/utils/helpers';
 import { StartNetworkPayload } from '@/interfaces/fabricNetworkApiPayloads';
 import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
+import { TASK_STATUS } from '@/utils/constants';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -105,6 +107,16 @@ export default function Index() {
   const [participants, setParticipants] = useState<Step2FormValues[]>([]);
 
   const [step, setActive] = useState(0);
+
+  const [status, setStatus] = useState('');
+
+  const [progress, setProgress] = useState(0);
+
+  const [timer, setTimer] = useState(0);
+
+  const [intervalId, setIntervalId] = useState<ReturnType<
+    typeof setInterval
+  > | null>(null);
 
   const [loading, setLoading] = useState(false);
 
@@ -235,15 +247,86 @@ export default function Index() {
     const payload: StartNetworkPayload = {
       ordererOrganization:
         participants.filter(
-          (participant) => participant.hasOrderingNode === 1
+          (participant) => participant.hasOrderingNode == 1
         )[0]?.name || '',
       peerOrganizations: formattedParticipants
     };
 
-    console.log('new: ', payload);
-
     await FabricNetworkApiInstance.startNetwork(payload);
   };
+
+  const getStatusAndHandle = async () => {
+    try {
+      const {
+        data: { inProgress, message }
+      } = await FabricNetworkApiInstance.getStatus();
+
+      console.log('aqui', inProgress, message);
+
+      if (inProgress && message === TASK_STATUS.GENERATING_ARTIFACTS) {
+        setStatus('Gerando artefatos');
+        setProgress(25);
+      }
+
+      if (inProgress && message === TASK_STATUS.STARTING_KING) {
+        setStatus('Iniciando rede');
+        setProgress(33);
+      }
+
+      if (inProgress && message === TASK_STATUS.STARTING_CLUSTER) {
+        setStatus('Iniciando cluster');
+        setProgress(66);
+      }
+
+      if (inProgress && message === TASK_STATUS.CONFIGURING_NETWORK) {
+        setStatus('Configurando a rede');
+        setProgress(100);
+      }
+
+      if (!inProgress && message === 'Sucesso' && intervalId) {
+        clearInterval(intervalId);
+
+        setLoading(false);
+        setActive(4);
+        setStatus('Sucesso');
+      }
+
+      if (!inProgress && message === 'Erro' && intervalId) {
+        clearInterval(intervalId);
+
+        setLoading(false);
+        setActive(3);
+        setStatus('Erro');
+      }
+    } catch (error) {
+      // Tratar erros aqui, se necessário
+    }
+  };
+
+  const handleReset = () => {
+    setActive(0);
+    setStatus('');
+    setProgress(11);
+    setParticipants([]);
+  };
+
+  useEffect(() => {
+    // let intervalId: ReturnType<typeof setInterval>;
+
+    if (step === 2) {
+      setIntervalId(setInterval(getStatusAndHandle, 10000));
+    }
+
+    return () => {
+      intervalId && clearInterval(intervalId);
+    };
+  }, [intervalId, step]);
+
+  useEffect(() => {
+    if (status === 'Configurando a rede' && intervalId) {
+      clearInterval(intervalId);
+    }
+  }, [intervalId, status]);
 
   return (
     <Container size={'xl'}>
@@ -257,6 +340,7 @@ export default function Index() {
             active={step}
             orientation="vertical"
             completedIcon={<IconCheck size={26} />}
+            color={status === 'Erro' ? 'red' : 'blue'}
           >
             <Stepper.Step
               label="Definição da plataforma"
@@ -276,7 +360,13 @@ export default function Index() {
             <Stepper.Step
               label="Processamento"
               description="Aguarde enquanto a rede é criada"
-              icon={<IconCircleDashed size={20} />}
+              icon={
+                status === 'Erro' ? (
+                  <IconX size={20} color="red" />
+                ) : (
+                  <IconCircleDashed size={20} />
+                )
+              }
               loading={loading}
             />
             <Stepper.Step
@@ -609,23 +699,46 @@ export default function Index() {
               Aguarde enquanto a rede é criada. Esse processo pode levar alguns
               minutos.
             </Text>
-            <Paper radius="md" withBorder className={classes.card} p="xl">
-              <Text ta="center" fw={700} className={classes.title}>
-                Criando rede Blockchain
-              </Text>
-              <Group position="apart" mt="xs">
-                <Text fz="sm" color="dimmed">
-                  Progresso
+            {status === 'Erro' ? (
+              <>
+                <Alert
+                  icon={<IconAlertCircle size="1rem" />}
+                  title="Atenção!"
+                  color="red"
+                  className="border border-red-500"
+                >
+                  <Text>
+                    Ocorreu um erro ao criar a rede Blockchain. Deseja tentar
+                    novamente?
+                  </Text>
+                </Alert>
+                <Button
+                  size="md"
+                  onClick={handleReset}
+                  leftIcon={<IconArrowBackUp size={20} />}
+                >
+                  Tentar novamente
+                </Button>
+              </>
+            ) : (
+              <Paper radius="md" withBorder className={classes.card} p="xl">
+                <Text ta="center" fw={700} className={classes.title}>
+                  {status ? status : 'Criando rede Blockchain'}
                 </Text>
-                <Text fz="sm" color="dimmed">
-                  xxx%
-                </Text>
-              </Group>
-              <Progress value={62} mt={5} animate size="xl" />
-              <Group position="apart" mt="md">
-                <Badge size="sm">tempo decorrido</Badge>
-              </Group>
-            </Paper>
+                <Group position="apart" mt="xs">
+                  <Text fz="sm" color="dimmed">
+                    Progresso
+                  </Text>
+                  <Text fz="sm" color="dimmed">
+                    {progress}%
+                  </Text>
+                </Group>
+                <Progress value={progress} mt={5} animate size="xl" />
+                <Group position="apart" mt="md">
+                  <Badge size="sm">tempo decorrido 00:00:00</Badge>
+                </Group>
+              </Paper>
+            )}
           </Box>
         </Grid.Col>
       </Grid>
