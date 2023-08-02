@@ -722,7 +722,8 @@ export default function Index() {
                 >
                   <Text>
                     Ocorreu um erro ao criar a rede Blockchain. Deseja tentar
-                    novamente ou prefere voltar para a página inicial?
+                    novamente ou prefere voltar para a página inicial e iniciar
+                    uma nova configuração?
                   </Text>
                 </Alert>
                 <div className="flex flex-col space-y-4 md:space-y-0 md:space-x-4 md:flex-row">
