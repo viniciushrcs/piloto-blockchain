@@ -119,17 +119,17 @@ export default function Index() {
 
   const [participants, setParticipants] = useState<Step2FormValues[]>([]);
 
-  const [step, setActive] = useState(0);
+  const [step, setStep] = useState(0);
+
+  const [flagRetry, setFlagRetry] = useState(Math.random());
+
+  console.log('step', step);
 
   const [status, setStatus] = useState('');
 
   const [progress, setProgress] = useState(0);
 
-  const [timer, setTimer] = useState(0);
-
-  const [intervalId, setIntervalId] = useState<ReturnType<
-    typeof setInterval
-  > | null>(null);
+  // const [timer, setTimer] = useState(0);
 
   const [loading, setLoading] = useState(false);
 
@@ -164,10 +164,10 @@ export default function Index() {
   });
 
   const nextStep = () =>
-    setActive((current) => (current < 5 ? current + 1 : current));
+    setStep((current) => (current < 5 ? current + 1 : current));
 
   const prevStep = () =>
-    setActive((current) => (current > 0 ? current - 1 : current));
+    setStep((current) => (current > 0 ? current - 1 : current));
 
   const handleEdit = (id: number) => {
     const participant = participants.find((p) => p.id === id);
@@ -255,10 +255,11 @@ export default function Index() {
     setLoading(true);
 
     if (again) {
-      return handleReset(STEP_PROCESSING);
+      setFlagRetry(Math.random());
+      handleReset(STEP_PROCESSING);
+    } else {
+      nextStep();
     }
-
-    nextStep();
 
     const formattedParticipants = convertParticipants(participants);
 
@@ -273,79 +274,70 @@ export default function Index() {
     await FabricNetworkApiInstance.startNetwork(payload);
   };
 
-  const getStatusAndHandle = async () => {
-    try {
-      const {
-        data: { inProgress, message }
-      } = await FabricNetworkApiInstance.getStatus();
-
-      console.log('aqui', inProgress, message);
-
-      if (inProgress && message === TASK_STATUS.GENERATING_ARTIFACTS) {
-        setStatus('Gerando artefatos');
-        setProgress(25);
-      }
-
-      if (inProgress && message === TASK_STATUS.STARTING_KING) {
-        setStatus('Iniciando rede');
-        setProgress(33);
-      }
-
-      if (inProgress && message === TASK_STATUS.STARTING_CLUSTER) {
-        setStatus('Iniciando cluster');
-        setProgress(66);
-      }
-
-      if (inProgress && message === TASK_STATUS.CONFIGURING_NETWORK) {
-        setStatus('Configurando a rede');
-        setProgress(100);
-      }
-
-      if (!inProgress && message === 'Sucesso' && intervalId) {
-        clearInterval(intervalId);
-
-        setLoading(false);
-        setActive(4);
-        setStatus('Sucesso');
-      }
-
-      if (!inProgress && message === 'Erro' && intervalId) {
-        clearInterval(intervalId);
-
-        setLoading(false);
-        setActive(3);
-        setStatus('Erro');
-      }
-    } catch (error) {
-      // Tratar erros aqui, se necessário
-    }
-  };
-
   const handleReset = (step: number = STEP_PLATFORM_DEFINITION) => {
-    setActive(step);
+    setStep(step);
     setStatus('');
     setProgress(11);
     setParticipants([]);
-    setIntervalId(null);
   };
 
   useEffect(() => {
-    // let intervalId: ReturnType<typeof setInterval>;
+    let intervalId: ReturnType<typeof setInterval>;
 
-    if (step === STEP_SUMMARY) {
-      setIntervalId(setInterval(getStatusAndHandle, 10000));
-    }
+    const getStatusAndHandle = async () => {
+      try {
+        const {
+          data: { inProgress, message }
+        } = await FabricNetworkApiInstance.getStatus();
 
-    return () => {
-      intervalId && clearInterval(intervalId);
+        console.log('aqui', inProgress, message);
+
+        if (inProgress && message === TASK_STATUS.GENERATING_ARTIFACTS) {
+          setStatus('Gerando artefatos');
+          setProgress(25);
+        }
+
+        if (inProgress && message === TASK_STATUS.STARTING_KING) {
+          setStatus('Iniciando rede');
+          setProgress(33);
+        }
+
+        if (inProgress && message === TASK_STATUS.STARTING_CLUSTER) {
+          setStatus('Iniciando cluster');
+          setProgress(66);
+        }
+
+        if (inProgress && message === TASK_STATUS.CONFIGURING_NETWORK) {
+          setStatus('Configurando a rede');
+          setProgress(100);
+        }
+
+        if (!inProgress && message === 'Sucesso') {
+          clearInterval(intervalId);
+
+          setLoading(false);
+          setStep(4);
+          setStatus('Sucesso');
+        }
+
+        if (!inProgress && message === 'Erro') {
+          clearInterval(intervalId);
+
+          setLoading(false);
+          setStep(3);
+          setStatus('Erro');
+        }
+      } catch (error) {
+        // Tratar erros aqui, se necessário
+      }
     };
-  }, [intervalId, step]);
 
-  useEffect(() => {
-    if (status === 'Configurando a rede' && intervalId) {
-      clearInterval(intervalId);
+    if (step === STEP_PROCESSING) {
+      intervalId = setInterval(getStatusAndHandle, 10000);
     }
-  }, [intervalId, status]);
+
+    return () => clearInterval(intervalId);
+  }, [step, flagRetry]);
 
   return (
     <Container size={'xl'}>
