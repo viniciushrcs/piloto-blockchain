@@ -35,6 +35,7 @@ import {
   IconInfoCircle,
   IconPencil,
   IconPlaystationCircle,
+  IconReload,
   IconTextPlus,
   IconTrash,
   IconX
@@ -99,6 +100,18 @@ type Data = Step1FormValues | Step2FormValues;
 
 export default function Index() {
   const { classes } = useStyles();
+
+  const TRY_AGAING = true;
+
+  const STEP_PLATFORM_DEFINITION = 0;
+
+  const STEP_PARTICIPANTS_DEFINITION = 1;
+
+  const STEP_SUMMARY = 2;
+
+  const STEP_PROCESSING = 3;
+
+  const STEP_COMPLETED = 4;
 
   const [data, setData] = useState<Data | null>(null);
 
@@ -238,8 +251,13 @@ export default function Index() {
     nextStep();
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (again: boolean = false) => {
     setLoading(true);
+
+    if (again) {
+      return handleReset(STEP_PROCESSING);
+    }
+
     nextStep();
 
     const formattedParticipants = convertParticipants(participants);
@@ -303,17 +321,18 @@ export default function Index() {
     }
   };
 
-  const handleReset = () => {
-    setActive(0);
+  const handleReset = (step: number = STEP_PLATFORM_DEFINITION) => {
+    setActive(step);
     setStatus('');
     setProgress(11);
     setParticipants([]);
+    setIntervalId(null);
   };
 
   useEffect(() => {
     // let intervalId: ReturnType<typeof setInterval>;
 
-    if (step === 2) {
+    if (step === STEP_SUMMARY) {
       setIntervalId(setInterval(getStatusAndHandle, 10000));
     }
 
@@ -378,7 +397,7 @@ export default function Index() {
         </Grid.Col>
         <Grid.Col md={9} className="space-y-4">
           <Box
-            hidden={step !== 0}
+            hidden={step !== STEP_PLATFORM_DEFINITION}
             p="md"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -423,7 +442,9 @@ export default function Index() {
             </Button>
           </Box>
           <Box
-            hidden={participants.length === 0 || step !== 1}
+            hidden={
+              participants.length === 0 || step !== STEP_PARTICIPANTS_DEFINITION
+            }
             p="sm"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -500,7 +521,7 @@ export default function Index() {
             </ScrollArea>
           </Box>
           <Box
-            hidden={step !== 1}
+            hidden={step !== STEP_PARTICIPANTS_DEFINITION}
             p="md"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -600,7 +621,7 @@ export default function Index() {
             </div>
           </Box>
           <Box
-            hidden={step !== 2}
+            hidden={step !== STEP_SUMMARY}
             p="md"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -665,7 +686,7 @@ export default function Index() {
             <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between">
               <Button
                 size="md"
-                onClick={handleCreate}
+                onClick={() => handleCreate()}
                 leftIcon={<IconArtboard size={20} />}
               >
                 Iniciar criação da rede
@@ -684,7 +705,7 @@ export default function Index() {
             </div>
           </Box>
           <Box
-            hidden={step !== 3}
+            hidden={step !== STEP_PROCESSING}
             p="md"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -709,16 +730,26 @@ export default function Index() {
                 >
                   <Text>
                     Ocorreu um erro ao criar a rede Blockchain. Deseja tentar
-                    novamente?
+                    novamente ou prefere voltar para a página inicial?
                   </Text>
                 </Alert>
-                <Button
-                  size="md"
-                  onClick={handleReset}
-                  leftIcon={<IconArrowBackUp size={20} />}
-                >
-                  Tentar novamente
-                </Button>
+                <div className="flex flex-col space-y-4 md:space-y-0 md:space-x-4 md:flex-row">
+                  <Button
+                    size="md"
+                    onClick={() => handleCreate(TRY_AGAING)}
+                    leftIcon={<IconReload size={20} />}
+                  >
+                    Tentar novamente
+                  </Button>
+                  <Button
+                    size="md"
+                    variant="default"
+                    onClick={() => handleReset()}
+                    leftIcon={<IconArrowBackUp size={20} />}
+                  >
+                    Voltar para a página inicial
+                  </Button>
+                </div>
               </>
             ) : (
               <Paper radius="md" withBorder className={classes.card} p="xl">
