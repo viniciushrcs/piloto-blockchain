@@ -20,6 +20,13 @@ function channel_command_group() {
     PEER_ORGS_INFO=("$@")
     channel_up "$ORD_ORG" "${PEER_ORGS_INFO[@]}"
     log "🏁 - Channel is ready."
+  elif [ "${COMMAND}" == "configtx" ]; then
+    log "Creating configtx" 
+    ORD_ORG=$1
+    shift
+    PEER_ORGS=("$@")
+    log "$ORD_ORG" "${PEER_ORGS[@]}"
+    create_configtx "$ORD_ORG" "${PEER_ORGS[@]}"
   else
     print_help
     exit 1
@@ -253,14 +260,17 @@ function extract_orderer_tls_cert() {
     > ${ORDERER_TLS_DIR}/signcerts/tls-cert.pem
 }
 
+function create_configtx() {
+  cat ${PWD}/config/$1/configtx-template.yaml | envsubst > ${TEMP_DIR}/configtx.yaml
+}
+
 function create_genesis_block() {
   push_fn "Creating channel genesis block"
-  cat ${PWD}/config/$1/configtx-template.yaml | envsubst > ${TEMP_DIR}/configtx.yaml
   FABRIC_CFG_PATH=${TEMP_DIR} \
     configtxgen \
-      -profile      TwoOrgsApplicationGenesis \
+      -profile      ${CHANNEL_NAME}Profile \
       -channelID    $CHANNEL_NAME \
-      -outputBlock  ${TEMP_DIR}/genesis_block.pb
+      -outputBlock  ${TEMP_DIR}/${CHANNEL_NAME}genesis_block.pb
 
   pop_fn
 }
@@ -288,7 +298,7 @@ function join_channel_orderer() {
     --client-cert     ${TEMP_DIR}/enrollments/${org}/users/${org}admin/msp/signcerts/cert.pem \
     --client-key      ${TEMP_DIR}/enrollments/${org}/users/${org}admin/msp/keystore/key.pem \
     --channelID       ${CHANNEL_NAME} \
-    --config-block    ${TEMP_DIR}/genesis_block.pb
+    --config-block    ${TEMP_DIR}/${CHANNEL_NAME}genesis_block.pb
 }
 
 function join_channel_peers() {
@@ -326,7 +336,7 @@ function join_channel_peer() {
   local ord_org=$3
   export_peer_context $org $peer
   peer channel join \
-    --blockpath   ${TEMP_DIR}/genesis_block.pb \
+    --blockpath   ${TEMP_DIR}/${CHANNEL_NAME}genesis_block.pb \
     --orderer     $ord_org-orderer1.${DOMAIN} \
     --connTimeout ${ORDERER_TIMEOUT} \
     --tls         \

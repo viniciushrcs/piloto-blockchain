@@ -5,11 +5,11 @@ FROM node:16 as build
 WORKDIR /app/src
 
 # Copy package.json and install dependencies
-COPY src/package.json .
+COPY api/package.json .
 RUN npm install
 
 # Copy TypeScript source files
-COPY src .
+COPY api .
 
 # Build the TypeScript project
 RUN npm run build
@@ -51,17 +51,16 @@ RUN apt-get update && apt-get install -y gettext-base
 RUN apt-get update && apt-get install -y jq
 
 # Copy the build output from the build stage
-COPY --from=build /app/src/dist /app/src
-COPY --from=build /app/src/node_modules /app/src/node_modules
-COPY --from=build /app/src/yaml-templates /app/src/yaml-templates
+COPY --from=build /app/api/dist /app/api
+COPY --from=build /app/api/node_modules /app/api/node_modules
+COPY --from=build /app/api/yaml-templates /app/api/yaml-templates
 
 # Set the working directory
-WORKDIR /app/src
+WORKDIR /app/api
 
 COPY ./network ../
 COPY scripts ../scripts
 COPY bin /usr/local/bin
-COPY chaincode-typescript ../chaincode-typescript
 
 # Define the volume mapping
 #VOLUME [ "/app/config", "/app/kube", "/app/build", "/.kube" ]
