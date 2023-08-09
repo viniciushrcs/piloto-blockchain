@@ -59,13 +59,13 @@ function load_org_config() {
   
   push_fn "Creating fabric config maps"
 
-  kubectl -n $ORG0_NS delete configmap $ORD_ORG-config || true
+  kubectl -n $ORG0_NS delete configmap $ORD_ORG-orderer-config || true
 
   for PEER_ORG in "${PEER_ORGS[@]}"; do
     kubectl -n $ORG1_NS delete configmap $PEER_ORG-config || true
   done
 
-  kubectl -n $ORG0_NS create configmap $ORD_ORG-config --from-file=config/$ORD_ORG
+  kubectl -n $ORG0_NS create configmap $ORD_ORG-orderer-config --from-file=config/$ORD_ORG
 
   for PEER_ORG in "${PEER_ORGS[@]}"; do
     kubectl -n $ORG1_NS create configmap $PEER_ORG-config --from-file=config/$PEER_ORG
