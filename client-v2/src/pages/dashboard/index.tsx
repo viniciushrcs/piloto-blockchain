@@ -281,16 +281,8 @@ export default function Index() {
     setParticipants([]);
   };
 
-  const formatOrganizationName = (inputValue) => {
-    // Substituir caracteres inválidos por traços ('-')
-    const cleanedName = inputValue.replace(/[^a-z0-9-]/g, '-').toLowerCase();
-
-    // Certificar-se de que o nome começa e termina com caractere alfanumérico
-    if (cleanedName.length < 3) {
-      return 'org-';
-    } else {
-      return cleanedName;
-    }
+  const formatOrganizationName = (inputValue: string) => {
+    return inputValue.replace(/[^a-z0-9-]/g, '-').toLowerCase();
   };
 
   useEffect(() => {
@@ -563,7 +555,6 @@ export default function Index() {
                 step2Form.setFieldValue('name', formatOrganizationName(value));
               }}
               value={step2Form.values.name}
-              // {...step2Form.getInputProps('name')}
             />
             <Select
               withinPortal
