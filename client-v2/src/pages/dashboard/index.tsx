@@ -45,6 +45,7 @@ import { convertParticipants } from '@/utils/helpers';
 import { StartNetworkPayload } from '@/interfaces/fabricNetworkApiPayloads';
 import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
 import { TASK_STATUS } from '@/utils/constants';
+import { format } from 'date-fns';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -129,7 +130,9 @@ export default function Index() {
 
   const [progress, setProgress] = useState(0);
 
-  // const [timer, setTimer] = useState(0);
+  const [startTime, setStartTime] = useState(new Date());
+
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   const [loading, setLoading] = useState(false);
 
@@ -261,6 +264,8 @@ export default function Index() {
       nextStep();
     }
 
+    setStartTime(new Date());
+
     const formattedParticipants = convertParticipants(participants);
 
     const payload: StartNetworkPayload = {
@@ -294,8 +299,6 @@ export default function Index() {
           data: { inProgress, message }
         } = await FabricNetworkApiInstance.getStatus();
 
-        console.log('aqui', inProgress, message);
-
         if (inProgress && message === TASK_STATUS.GENERATING_ARTIFACTS) {
           setStatus('Gerando artefatos');
           setProgress(25);
@@ -313,23 +316,23 @@ export default function Index() {
 
         if (inProgress && message === TASK_STATUS.CONFIGURING_NETWORK) {
           setStatus('Configurando a rede');
-          setProgress(100);
-        }
-
-        if (!inProgress && message === 'Sucesso') {
-          clearInterval(intervalId);
-
-          setLoading(false);
-          setStep(4);
-          setStatus('Sucesso');
+          setProgress(94);
         }
 
         if (!inProgress && message === 'Erro') {
           clearInterval(intervalId);
 
           setLoading(false);
-          setStep(3);
           setStatus('Erro');
+        }
+
+        if (!inProgress) {
+          clearInterval(intervalId);
+
+          setProgress(100);
+          setLoading(false);
+          setStep(STEP_COMPLETED + 1);
+          setStatus('Sucesso');
         }
       } catch (error) {
         // Tratar erros aqui, se necessário
@@ -342,6 +345,24 @@ export default function Index() {
 
     return () => clearInterval(intervalId);
   }, [step, flagRetry]);
+
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+
+    if (step === STEP_PROCESSING) {
+      intervalId = setInterval(() => {
+        const currentTime = new Date();
+
+        const secondsElapsed = Math.floor(
+          (currentTime.getTime() - startTime.getTime()) / 1000
+        );
+
+        setElapsedTime(secondsElapsed);
+      }, 1000);
+    }
+
+    return () => clearInterval(intervalId);
+  }, [startTime, step]);
 
   return (
     <Container size={'xl'}>
@@ -768,7 +789,10 @@ export default function Index() {
                 </Group>
                 <Progress value={progress} mt={5} animate size="xl" />
                 <Group position="apart" mt="md">
-                  <Badge size="sm">tempo decorrido 00:00:00</Badge>
+                  <Badge size="sm">
+                    tempo decorrido{' '}
+                    {format(new Date(elapsedTime * 1000), 'mm:ss')}
+                  </Badge>
                 </Group>
               </Paper>
             )}
