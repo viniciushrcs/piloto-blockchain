@@ -35,6 +35,7 @@ import {
   IconInfoCircle,
   IconPencil,
   IconPlaystationCircle,
+  IconReload,
   IconTextPlus,
   IconTrash,
   IconX
@@ -100,23 +101,35 @@ type Data = Step1FormValues | Step2FormValues;
 export default function Index() {
   const { classes } = useStyles();
 
+  const TRY_AGAING = true;
+
+  const STEP_PLATFORM_DEFINITION = 0;
+
+  const STEP_PARTICIPANTS_DEFINITION = 1;
+
+  const STEP_SUMMARY = 2;
+
+  const STEP_PROCESSING = 3;
+
+  const STEP_COMPLETED = 4;
+
   const [data, setData] = useState<Data | null>(null);
 
   const [buttonName, setButtonName] = useState('Adicionar participante');
 
   const [participants, setParticipants] = useState<Step2FormValues[]>([]);
 
-  const [step, setActive] = useState(0);
+  const [step, setStep] = useState(0);
+
+  const [flagRetry, setFlagRetry] = useState(Math.random());
+
+  console.log('step', step);
 
   const [status, setStatus] = useState('');
 
   const [progress, setProgress] = useState(0);
 
-  const [timer, setTimer] = useState(0);
-
-  const [intervalId, setIntervalId] = useState<ReturnType<
-    typeof setInterval
-  > | null>(null);
+  // const [timer, setTimer] = useState(0);
 
   const [loading, setLoading] = useState(false);
 
@@ -151,10 +164,10 @@ export default function Index() {
   });
 
   const nextStep = () =>
-    setActive((current) => (current < 5 ? current + 1 : current));
+    setStep((current) => (current < 5 ? current + 1 : current));
 
   const prevStep = () =>
-    setActive((current) => (current > 0 ? current - 1 : current));
+    setStep((current) => (current > 0 ? current - 1 : current));
 
   const handleEdit = (id: number) => {
     const participant = participants.find((p) => p.id === id);
@@ -238,9 +251,15 @@ export default function Index() {
     nextStep();
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (again: boolean = false) => {
     setLoading(true);
-    nextStep();
+
+    if (again) {
+      setFlagRetry(Math.random());
+      handleReset(STEP_PROCESSING);
+    } else {
+      nextStep();
+    }
 
     const formattedParticipants = convertParticipants(participants);
 
@@ -255,56 +274,8 @@ export default function Index() {
     await FabricNetworkApiInstance.startNetwork(payload);
   };
 
-  const getStatusAndHandle = async () => {
-    try {
-      const {
-        data: { inProgress, message }
-      } = await FabricNetworkApiInstance.getStatus();
-
-      console.log('aqui', inProgress, message);
-
-      if (inProgress && message === TASK_STATUS.GENERATING_ARTIFACTS) {
-        setStatus('Gerando artefatos');
-        setProgress(25);
-      }
-
-      if (inProgress && message === TASK_STATUS.STARTING_KING) {
-        setStatus('Iniciando rede');
-        setProgress(33);
-      }
-
-      if (inProgress && message === TASK_STATUS.STARTING_CLUSTER) {
-        setStatus('Iniciando cluster');
-        setProgress(66);
-      }
-
-      if (inProgress && message === TASK_STATUS.CONFIGURING_NETWORK) {
-        setStatus('Configurando a rede');
-        setProgress(100);
-      }
-
-      if (!inProgress && message === 'Sucesso' && intervalId) {
-        clearInterval(intervalId);
-
-        setLoading(false);
-        setActive(4);
-        setStatus('Sucesso');
-      }
-
-      if (!inProgress && message === 'Erro' && intervalId) {
-        clearInterval(intervalId);
-
-        setLoading(false);
-        setActive(3);
-        setStatus('Erro');
-      }
-    } catch (error) {
-      // Tratar erros aqui, se necessário
-    }
-  };
-
-  const handleReset = () => {
-    setActive(0);
+  const handleReset = (step: number = STEP_PLATFORM_DEFINITION) => {
+    setStep(step);
     setStatus('');
     setProgress(11);
     setParticipants([]);
@@ -323,22 +294,62 @@ export default function Index() {
   };
 
   useEffect(() => {
-    // let intervalId: ReturnType<typeof setInterval>;
+    let intervalId: ReturnType<typeof setInterval>;
 
-    if (step === 2) {
-      setIntervalId(setInterval(getStatusAndHandle, 10000));
-    }
+    const getStatusAndHandle = async () => {
+      try {
+        const {
+          data: { inProgress, message }
+        } = await FabricNetworkApiInstance.getStatus();
 
-    return () => {
-      intervalId && clearInterval(intervalId);
+        console.log('aqui', inProgress, message);
+
+        if (inProgress && message === TASK_STATUS.GENERATING_ARTIFACTS) {
+          setStatus('Gerando artefatos');
+          setProgress(25);
+        }
+
+        if (inProgress && message === TASK_STATUS.STARTING_KING) {
+          setStatus('Iniciando rede');
+          setProgress(33);
+        }
+
+        if (inProgress && message === TASK_STATUS.STARTING_CLUSTER) {
+          setStatus('Iniciando cluster');
+          setProgress(66);
+        }
+
+        if (inProgress && message === TASK_STATUS.CONFIGURING_NETWORK) {
+          setStatus('Configurando a rede');
+          setProgress(100);
+        }
+
+        if (!inProgress && message === 'Sucesso') {
+          clearInterval(intervalId);
+
+          setLoading(false);
+          setStep(4);
+          setStatus('Sucesso');
+        }
+
+        if (!inProgress && message === 'Erro') {
+          clearInterval(intervalId);
+
+          setLoading(false);
+          setStep(3);
+          setStatus('Erro');
+        }
+      } catch (error) {
+        // Tratar erros aqui, se necessário
+      }
     };
-  }, [intervalId, step]);
 
-  useEffect(() => {
-    if (status === 'Configurando a rede' && intervalId) {
-      clearInterval(intervalId);
+    if (step === STEP_PROCESSING) {
+      intervalId = setInterval(getStatusAndHandle, 10000);
     }
-  }, [intervalId, status]);
+
+    return () => clearInterval(intervalId);
+  }, [step, flagRetry]);
 
   return (
     <Container size={'xl'}>
@@ -390,7 +401,7 @@ export default function Index() {
         </Grid.Col>
         <Grid.Col md={9} className="space-y-4">
           <Box
-            hidden={step !== 0}
+            hidden={step !== STEP_PLATFORM_DEFINITION}
             p="md"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -435,7 +446,9 @@ export default function Index() {
             </Button>
           </Box>
           <Box
-            hidden={participants.length === 0 || step !== 1}
+            hidden={
+              participants.length === 0 || step !== STEP_PARTICIPANTS_DEFINITION
+            }
             p="sm"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -512,7 +525,7 @@ export default function Index() {
             </ScrollArea>
           </Box>
           <Box
-            hidden={step !== 1}
+            hidden={step !== STEP_PARTICIPANTS_DEFINITION}
             p="md"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -618,7 +631,7 @@ export default function Index() {
             </div>
           </Box>
           <Box
-            hidden={step !== 2}
+            hidden={step !== STEP_SUMMARY}
             p="md"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -683,7 +696,7 @@ export default function Index() {
             <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between">
               <Button
                 size="md"
-                onClick={handleCreate}
+                onClick={() => handleCreate()}
                 leftIcon={<IconArtboard size={20} />}
               >
                 Iniciar criação da rede
@@ -702,7 +715,7 @@ export default function Index() {
             </div>
           </Box>
           <Box
-            hidden={step !== 3}
+            hidden={step !== STEP_PROCESSING}
             p="md"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -727,16 +740,27 @@ export default function Index() {
                 >
                   <Text>
                     Ocorreu um erro ao criar a rede Blockchain. Deseja tentar
-                    novamente?
+                    novamente ou prefere voltar para a página inicial e iniciar
+                    uma nova configuração?
                   </Text>
                 </Alert>
-                <Button
-                  size="md"
-                  onClick={handleReset}
-                  leftIcon={<IconArrowBackUp size={20} />}
-                >
-                  Tentar novamente
-                </Button>
+                <div className="flex flex-col space-y-4 md:space-y-0 md:space-x-4 md:flex-row">
+                  <Button
+                    size="md"
+                    onClick={() => handleCreate(TRY_AGAING)}
+                    leftIcon={<IconReload size={20} />}
+                  >
+                    Tentar novamente
+                  </Button>
+                  <Button
+                    size="md"
+                    variant="default"
+                    onClick={() => handleReset()}
+                    leftIcon={<IconArrowBackUp size={20} />}
+                  >
+                    Voltar para a página inicial
+                  </Button>
+                </div>
               </>
             ) : (
               <Paper radius="md" withBorder className={classes.card} p="xl">
