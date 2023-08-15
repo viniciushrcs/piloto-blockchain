@@ -1,4 +1,5 @@
 import { executeCommand } from './helpers/helpers';
+import { updateConfigtx } from './helpers/update-configtx';
 
 export async function kind() {
   await executeCommand(['../network kind']);
@@ -19,16 +20,31 @@ export async function up(specs) {
   await executeCommand([
     `../network up ${specs.ordererOrganization} ${peerOrgsArgs}`,
   ]);
+  await createChannel({ ...specs, channelName: 'channeldefault' }, true);
 }
 
 export async function down() {
   await executeCommand([`../network down`]);
 }
 
-export async function createChannel(specs) {
+export async function createChannel(specs, isDefault = false) {
   const peerOrgsArgs = specs.peerOrganizations
     .map((org) => `${org.name}:${org.peers.join(',')}`)
     .join(' ');
+  const peerOrgs = specs.peerOrganizations.map((org) => org.name);
+  const peerOrgsList = specs.peerOrganizations.map((org) => org.name).join(' ');
+
+  if (isDefault) {
+    await executeCommand([
+      `../network channel configtx ${specs.channelName} ${specs.ordererOrganization} ${peerOrgsList}`,
+    ]);
+    await executeCommand([
+      `../network channel create ${specs.channelName} ${specs.ordererOrganization} ${peerOrgsArgs}`,
+    ]);
+    return;
+  }
+  const profileName = `${specs.channelName}Profile`;
+  await updateConfigtx(profileName, peerOrgs);
   await executeCommand([
     `../network channel create ${specs.channelName} ${specs.ordererOrganization} ${peerOrgsArgs}`,
   ]);

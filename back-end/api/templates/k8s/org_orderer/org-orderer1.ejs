@@ -94,7 +94,7 @@ spec:
             claimName: fabric-<%= ordererOrg %>
         - name: fabric-config
           configMap:
-            name: <%= ordererOrg %>-config
+            name: <%= ordererOrg %>-orderer-config
         - name: tls-cert-volume
           secret:
             secretName: <%= ordererOrg %>-orderer1-tls-cert
