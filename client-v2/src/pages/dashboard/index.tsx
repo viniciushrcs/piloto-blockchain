@@ -33,6 +33,7 @@ import {
   IconCheck,
   IconCircleDashed,
   IconInfoCircle,
+  IconNetwork,
   IconPencil,
   IconPlaystationCircle,
   IconReload,
@@ -796,6 +797,32 @@ export default function Index() {
                 </Group>
               </Paper>
             )}
+          </Box>
+          <Box
+            hidden={step !== STEP_COMPLETED + 1}
+            p="md"
+            sx={(theme) => ({
+              backgroundColor: theme.colors.gray[0],
+              border: `1px solid ${theme.colors.gray[2]}`,
+              borderRadius: theme.radius.md
+            })}
+            component="div"
+            className="space-y-4"
+          >
+            <Title order={2}>Concluído</Title>
+            <Text>
+              A rede Blockchain foi criada com sucesso! Você pode acessar o
+              dashboard da rede através do link abaixo.
+            </Text>
+            <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between">
+              <Button
+                size="md"
+                type="button"
+                leftIcon={<IconNetwork size={20} />}
+              >
+                Acessar dashboard
+              </Button>
+            </div>
           </Box>
         </Grid.Col>
       </Grid>
