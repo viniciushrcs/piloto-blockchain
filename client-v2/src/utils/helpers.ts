@@ -1,4 +1,5 @@
 import { PeerOrganization } from '@/interfaces/fabricNetworkApiPayloads';
+import { Step2FormValues } from '@/pages/dashboard';
 
 export function createPayload(
   ordererOrganization: string,
@@ -27,4 +28,22 @@ export function createPayload(
     chaincodeName,
     chaincodePath
   };
+}
+
+export function convertParticipants(
+  input: Step2FormValues[]
+): PeerOrganization[] {
+  const output: PeerOrganization[] = [];
+
+  for (const org of input) {
+    const peers: string[] = [];
+
+    for (let i = 1; i <= org.numberOfPeers; i++) {
+      peers.push(`peer${i}`);
+    }
+
+    output.push({ name: org.name, peers });
+  }
+
+  return output;
 }

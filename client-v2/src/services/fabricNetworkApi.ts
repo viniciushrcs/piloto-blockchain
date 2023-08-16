@@ -28,14 +28,14 @@ class FabricNetworkApi {
     }
   }
 
-  deployChaincode = async (payload: DeployChaincodePayload) => {
+  async deployChaincode(payload: DeployChaincodePayload) {
     try {
       return await api.post('/deploy-chaincode', payload);
     } catch (error) {
       console.error('Erro ao implantar chaincode', error);
       throw error;
     }
-  };
+  }
 
   async getStatus() {
     try {
@@ -46,6 +46,7 @@ class FabricNetworkApi {
       throw error;
     }
   }
+
   async executeChaincode() {
     try {
       //todo remover esse hardcode

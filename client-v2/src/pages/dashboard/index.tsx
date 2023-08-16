@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -26,19 +26,27 @@ import {
 import { hasLength, isInRange, useForm } from '@mantine/form';
 import {
   IconAlertCircle,
+  IconArrowBackUp,
   IconArrowLeft,
   IconArrowRight,
   IconArtboard,
   IconCheck,
   IconCircleDashed,
   IconInfoCircle,
+  IconNetwork,
   IconPencil,
   IconPlaystationCircle,
+  IconReload,
   IconTextPlus,
   IconTrash,
   IconX
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { convertParticipants } from '@/utils/helpers';
+import { StartNetworkPayload } from '@/interfaces/fabricNetworkApiPayloads';
+import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
+import { TASK_STATUS } from '@/utils/constants';
+import { format } from 'date-fns';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -83,7 +91,7 @@ type Step1FormValues = {
   platform: string;
 };
 
-type Step2FormValues = {
+export type Step2FormValues = {
   id?: number;
   name: string;
   hasOrderingNode: number;
@@ -95,13 +103,37 @@ type Data = Step1FormValues | Step2FormValues;
 export default function Index() {
   const { classes } = useStyles();
 
+  const TRY_AGAING = true;
+
+  const STEP_PLATFORM_DEFINITION = 0;
+
+  const STEP_PARTICIPANTS_DEFINITION = 1;
+
+  const STEP_SUMMARY = 2;
+
+  const STEP_PROCESSING = 3;
+
+  const STEP_COMPLETED = 4;
+
   const [data, setData] = useState<Data | null>(null);
 
   const [buttonName, setButtonName] = useState('Adicionar participante');
 
   const [participants, setParticipants] = useState<Step2FormValues[]>([]);
 
-  const [step, setActive] = useState(0);
+  const [step, setStep] = useState(0);
+
+  const [flagRetry, setFlagRetry] = useState(Math.random());
+
+  console.log('step', step);
+
+  const [status, setStatus] = useState('');
+
+  const [progress, setProgress] = useState(0);
+
+  const [startTime, setStartTime] = useState(new Date());
+
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   const [loading, setLoading] = useState(false);
 
@@ -110,7 +142,7 @@ export default function Index() {
       platform: ''
     },
     validate: {
-      platform: hasLength({ min: 3 })
+      platform: hasLength({ min: 3 }, 'Você precisa selecionar uma plataforma')
     }
   });
 
@@ -136,10 +168,10 @@ export default function Index() {
   });
 
   const nextStep = () =>
-    setActive((current) => (current < 5 ? current + 1 : current));
+    setStep((current) => (current < 5 ? current + 1 : current));
 
   const prevStep = () =>
-    setActive((current) => (current > 0 ? current - 1 : current));
+    setStep((current) => (current > 0 ? current - 1 : current));
 
   const handleEdit = (id: number) => {
     const participant = participants.find((p) => p.id === id);
@@ -162,6 +194,21 @@ export default function Index() {
   };
 
   const onSubmitStep2 = async (values: Step2FormValues) => {
+    const hasOrderingNode = participants.filter(
+      (participant) =>
+        participant.hasOrderingNode == 1 && participant.id != values.id
+    );
+
+    if (values.hasOrderingNode == 1 && hasOrderingNode.length > 0) {
+      return notifications.show({
+        title: 'Atenção!',
+        message: 'Já existe um participante com nó ordenador',
+        color: 'red',
+        icon: <IconX size={20} />,
+        withBorder: true
+      });
+    }
+
     if (values.id) {
       const newParticipants = participants.map((participant) =>
         participant.id === values.id ? values : participant
@@ -191,15 +238,132 @@ export default function Index() {
       });
     }
 
+    const hasOrderingNode = participants.filter(
+      (participant) => participant.hasOrderingNode == 1
+    );
+
+    if (hasOrderingNode.length === 0) {
+      return notifications.show({
+        title: 'Atenção!',
+        message: 'É necessário adicionar pelo menos um nó ordenador',
+        color: 'red',
+        icon: <IconX size={20} />,
+        withBorder: true
+      });
+    }
+
     nextStep();
   };
 
-  const handleCreate = () => {
+  const handleCreate = async (again: boolean = false) => {
     setLoading(true);
-    nextStep();
 
-    // TODO: Enviar request para a API
+    if (again) {
+      setFlagRetry(Math.random());
+      handleReset(STEP_PROCESSING);
+    } else {
+      nextStep();
+    }
+
+    setStartTime(new Date());
+
+    const formattedParticipants = convertParticipants(participants);
+
+    const payload: StartNetworkPayload = {
+      ordererOrganization:
+        participants.filter(
+          (participant) => participant.hasOrderingNode == 1
+        )[0]?.name || '',
+      peerOrganizations: formattedParticipants
+    };
+
+    await FabricNetworkApiInstance.startNetwork(payload);
   };
+
+  const handleReset = (step: number = STEP_PLATFORM_DEFINITION) => {
+    setStep(step);
+    setStatus('');
+    setProgress(11);
+    setParticipants([]);
+  };
+
+  const formatOrganizationName = (inputValue: string) => {
+    return inputValue.replace(/[^a-z0-9-]/g, '-').toLowerCase();
+  };
+
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+
+    const getStatusAndHandle = async () => {
+      try {
+        const {
+          data: { inProgress, message }
+        } = await FabricNetworkApiInstance.getStatus();
+
+        if (inProgress && message === TASK_STATUS.GENERATING_ARTIFACTS) {
+          setStatus('Gerando artefatos');
+          setProgress(25);
+        }
+
+        if (inProgress && message === TASK_STATUS.STARTING_KING) {
+          setStatus('Iniciando rede');
+          setProgress(33);
+        }
+
+        if (inProgress && message === TASK_STATUS.STARTING_CLUSTER) {
+          setStatus('Iniciando cluster');
+          setProgress(66);
+        }
+
+        if (inProgress && message === TASK_STATUS.CONFIGURING_NETWORK) {
+          setStatus('Configurando a rede');
+          setProgress(94);
+        }
+
+        if (!inProgress && message === 'Erro') {
+          clearInterval(intervalId);
+
+          setLoading(false);
+          setStatus('Erro');
+        }
+
+        if (!inProgress) {
+          clearInterval(intervalId);
+
+          setProgress(100);
+          setLoading(false);
+          setStep(STEP_COMPLETED + 1);
+          setStatus('Sucesso');
+        }
+      } catch (error) {
+        // Tratar erros aqui, se necessário
+      }
+    };
+
+    if (step === STEP_PROCESSING) {
+      intervalId = setInterval(getStatusAndHandle, 10000);
+    }
+
+    return () => clearInterval(intervalId);
+  }, [step, flagRetry]);
+
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+
+    if (step === STEP_PROCESSING) {
+      intervalId = setInterval(() => {
+        const currentTime = new Date();
+
+        const secondsElapsed = Math.floor(
+          (currentTime.getTime() - startTime.getTime()) / 1000
+        );
+
+        setElapsedTime(secondsElapsed);
+      }, 1000);
+    }
+
+    return () => clearInterval(intervalId);
+  }, [startTime, step]);
 
   return (
     <Container size={'xl'}>
@@ -213,6 +377,7 @@ export default function Index() {
             active={step}
             orientation="vertical"
             completedIcon={<IconCheck size={26} />}
+            color={status === 'Erro' ? 'red' : 'blue'}
           >
             <Stepper.Step
               label="Definição da plataforma"
@@ -232,7 +397,13 @@ export default function Index() {
             <Stepper.Step
               label="Processamento"
               description="Aguarde enquanto a rede é criada"
-              icon={<IconCircleDashed size={20} />}
+              icon={
+                status === 'Erro' ? (
+                  <IconX size={20} color="red" />
+                ) : (
+                  <IconCircleDashed size={20} />
+                )
+              }
               loading={loading}
             />
             <Stepper.Step
@@ -244,7 +415,7 @@ export default function Index() {
         </Grid.Col>
         <Grid.Col md={9} className="space-y-4">
           <Box
-            hidden={step !== 0}
+            hidden={step !== STEP_PLATFORM_DEFINITION}
             p="md"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -289,7 +460,9 @@ export default function Index() {
             </Button>
           </Box>
           <Box
-            hidden={participants.length === 0 || step !== 1}
+            hidden={
+              participants.length === 0 || step !== STEP_PARTICIPANTS_DEFINITION
+            }
             p="sm"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -366,7 +539,7 @@ export default function Index() {
             </ScrollArea>
           </Box>
           <Box
-            hidden={step !== 1}
+            hidden={step !== STEP_PARTICIPANTS_DEFINITION}
             p="md"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -382,7 +555,7 @@ export default function Index() {
               withAsterisk
               mb="md"
               label="Nome da organização"
-              placeholder="Ex.: Org0"
+              placeholder="Ex.: org0 (sem espaços, caracteres especiais ou acentos e tudo em minúsculo)"
               classNames={classes}
               rightSection={
                 <Tooltip
@@ -398,7 +571,12 @@ export default function Index() {
                   </Text>
                 </Tooltip>
               }
-              {...step2Form.getInputProps('name')}
+              onChange={(event) => {
+                const { value } = event.currentTarget;
+
+                step2Form.setFieldValue('name', formatOrganizationName(value));
+              }}
+              value={step2Form.values.name}
             />
             <Select
               withinPortal
@@ -466,7 +644,7 @@ export default function Index() {
             </div>
           </Box>
           <Box
-            hidden={step !== 2}
+            hidden={step !== STEP_SUMMARY}
             p="md"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -477,12 +655,18 @@ export default function Index() {
             className="space-y-4"
           >
             <Title order={2}>Resumo</Title>
-            <Text>
-              Confira os dados das organizações que serão criadas na rede
-              Blockchain usando a plataforma{' '}
-              <strong>{data && (data as Step1FormValues).platform}</strong>.
-            </Text>
-
+            <Alert
+              icon={<IconAlertCircle size="1rem" />}
+              title="Atenção!"
+              color="yellow"
+              className="border border-yellow-500"
+            >
+              <Text>
+                Confira os dados das organizações que serão criadas na rede
+                Blockchain usando a plataforma{' '}
+                <strong>{data && (data as Step1FormValues).platform}</strong>.
+              </Text>
+            </Alert>
             {participants?.map((participant) => (
               <Card
                 key={participant.id}
@@ -525,7 +709,7 @@ export default function Index() {
             <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between">
               <Button
                 size="md"
-                onClick={handleCreate}
+                onClick={() => handleCreate()}
                 leftIcon={<IconArtboard size={20} />}
               >
                 Iniciar criação da rede
@@ -544,7 +728,7 @@ export default function Index() {
             </div>
           </Box>
           <Box
-            hidden={step !== 3}
+            hidden={step !== STEP_PROCESSING}
             p="md"
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[0],
@@ -559,23 +743,86 @@ export default function Index() {
               Aguarde enquanto a rede é criada. Esse processo pode levar alguns
               minutos.
             </Text>
-            <Paper radius="md" withBorder className={classes.card} p="xl">
-              <Text ta="center" fw={700} className={classes.title}>
-                Criando rede Blockchain
-              </Text>
-              <Group position="apart" mt="xs">
-                <Text fz="sm" color="dimmed">
-                  Progresso
+            {status === 'Erro' ? (
+              <>
+                <Alert
+                  icon={<IconAlertCircle size="1rem" />}
+                  title="Atenção!"
+                  color="red"
+                  className="border border-red-500"
+                >
+                  <Text>
+                    Ocorreu um erro ao criar a rede Blockchain. Deseja tentar
+                    novamente ou prefere voltar para a página inicial e iniciar
+                    uma nova configuração?
+                  </Text>
+                </Alert>
+                <div className="flex flex-col space-y-4 md:space-y-0 md:space-x-4 md:flex-row">
+                  <Button
+                    size="md"
+                    onClick={() => handleCreate(TRY_AGAING)}
+                    leftIcon={<IconReload size={20} />}
+                  >
+                    Tentar novamente
+                  </Button>
+                  <Button
+                    size="md"
+                    variant="default"
+                    onClick={() => handleReset()}
+                    leftIcon={<IconArrowBackUp size={20} />}
+                  >
+                    Voltar para a página inicial
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <Paper radius="md" withBorder className={classes.card} p="xl">
+                <Text ta="center" fw={700} className={classes.title}>
+                  {status ? status : 'Criando rede Blockchain'}
                 </Text>
-                <Text fz="sm" color="dimmed">
-                  xxx%
-                </Text>
-              </Group>
-              <Progress value={62} mt={5} animate size="xl" />
-              <Group position="apart" mt="md">
-                <Badge size="sm">tempo decorrido</Badge>
-              </Group>
-            </Paper>
+                <Group position="apart" mt="xs">
+                  <Text fz="sm" color="dimmed">
+                    Progresso
+                  </Text>
+                  <Text fz="sm" color="dimmed">
+                    {progress}%
+                  </Text>
+                </Group>
+                <Progress value={progress} mt={5} animate size="xl" />
+                <Group position="apart" mt="md">
+                  <Badge size="sm">
+                    tempo decorrido{' '}
+                    {format(new Date(elapsedTime * 1000), 'mm:ss')}
+                  </Badge>
+                </Group>
+              </Paper>
+            )}
+          </Box>
+          <Box
+            hidden={step !== STEP_COMPLETED + 1}
+            p="md"
+            sx={(theme) => ({
+              backgroundColor: theme.colors.gray[0],
+              border: `1px solid ${theme.colors.gray[2]}`,
+              borderRadius: theme.radius.md
+            })}
+            component="div"
+            className="space-y-4"
+          >
+            <Title order={2}>Concluído</Title>
+            <Text>
+              A rede Blockchain foi criada com sucesso! Você pode acessar o
+              dashboard da rede através do link abaixo.
+            </Text>
+            <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between">
+              <Button
+                size="md"
+                type="button"
+                leftIcon={<IconNetwork size={20} />}
+              >
+                Acessar dashboard
+              </Button>
+            </div>
           </Box>
         </Grid.Col>
       </Grid>
