@@ -49,6 +49,7 @@ import { ORGANIZATIONS_PATH, TASK_STATUS } from '@/utils/constants';
 import { format } from 'date-fns';
 import { useOrganizationStore } from '@/stores/organization';
 import Link from 'next/link';
+import { OrgFormData } from '@/types/orgFormData';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -89,23 +90,16 @@ const useStyles = createStyles((theme) => ({
   }
 }));
 
-type Step1FormValues = {
+type InitialFormData = {
   platform: string;
 };
 
-export type Step2FormValues = {
-  id?: number;
-  name: string;
-  hasOrderingNode: number;
-  numberOfPeers: number;
-};
-
-type Data = Step1FormValues | Step2FormValues;
+type Data = InitialFormData | OrgFormData;
 
 export default function Index() {
   const { classes } = useStyles();
 
-  const { setOrganization } = useOrganizationStore();
+  const { setOrganizations } = useOrganizationStore();
 
   const TRY_AGAING = true;
 
@@ -123,7 +117,7 @@ export default function Index() {
 
   const [buttonName, setButtonName] = useState('Adicionar participante');
 
-  const [participants, setParticipants] = useState<Step2FormValues[]>([]);
+  const [participants, setParticipants] = useState<OrgFormData[]>([]);
 
   const [step, setStep] = useState(0);
 
@@ -139,7 +133,7 @@ export default function Index() {
 
   const [loading, setLoading] = useState(false);
 
-  const step1Form = useForm<Step1FormValues>({
+  const step1Form = useForm<InitialFormData>({
     initialValues: {
       platform: ''
     },
@@ -148,7 +142,7 @@ export default function Index() {
     }
   });
 
-  const step2Form = useForm<Step2FormValues>({
+  const step2Form = useForm<OrgFormData>({
     initialValues: {
       name: '',
       hasOrderingNode: -1,
@@ -190,12 +184,12 @@ export default function Index() {
     );
   };
 
-  const onSubmitStep1 = async (values: Step1FormValues) => {
+  const onSubmitStep1 = async (values: InitialFormData) => {
     setData(values);
     nextStep();
   };
 
-  const onSubmitStep2 = async (values: Step2FormValues) => {
+  const onSubmitStep2 = async (values: OrgFormData) => {
     const hasOrderingNode = participants.filter(
       (participant) =>
         participant.hasOrderingNode == 1 && participant.id != values.id
@@ -269,6 +263,8 @@ export default function Index() {
 
     setStartTime(new Date());
 
+    setOrganizations(participants);
+
     const formattedParticipants = convertParticipants(participants);
 
     const payload: StartNetworkPayload = {
@@ -279,9 +275,7 @@ export default function Index() {
       peerOrganizations: formattedParticipants
     };
 
-    setOrganization(payload);
-
-    // await FabricNetworkApiInstance.startNetwork(payload);
+    await FabricNetworkApiInstance.startNetwork(payload);
   };
 
   const handleReset = (step: number = STEP_PLATFORM_DEFINITION) => {
@@ -329,7 +323,7 @@ export default function Index() {
 
           setLoading(false);
           setStatus('Erro');
-          // setOrganization(undefined);
+          // setOrganizations(undefined);
         }
 
         if (!inProgress) {
@@ -350,7 +344,7 @@ export default function Index() {
     }
 
     return () => clearInterval(intervalId);
-  }, [step, flagRetry, setOrganization]);
+  }, [step, flagRetry, setOrganizations]);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
@@ -669,7 +663,7 @@ export default function Index() {
               <Text>
                 Confira os dados das organizações que serão criadas na rede
                 Blockchain usando a plataforma{' '}
-                <strong>{data && (data as Step1FormValues).platform}</strong>.
+                <strong>{data && (data as InitialFormData).platform}</strong>.
               </Text>
             </Alert>
             {participants?.map((participant) => (

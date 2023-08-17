@@ -1,23 +1,18 @@
-import { StartNetworkPayload } from '@/interfaces/fabricNetworkApiPayloads';
+import { OrgFormData } from '@/types/orgFormData';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 type State = {
-  organizations: StartNetworkPayload[];
+  organizations: OrgFormData[];
   // eslint-disable-next-line no-unused-vars
-  setOrganization: (organization: StartNetworkPayload) => void;
+  setOrganizations: (organizations: OrgFormData[]) => void;
 };
 
 export const useOrganizationStore = create<State>()(
   persist(
     (set) => ({
-      organizations: [] as StartNetworkPayload[],
-      setOrganization: (organization) => {
-        set((state) => ({
-          ...state,
-          organizations: [...state.organizations, organization]
-        }));
-      }
+      organizations: [] as OrgFormData[],
+      setOrganizations: (organizations) => set({ organizations })
     }),
     {
       name: 'organization-storage'

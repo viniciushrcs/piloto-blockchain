@@ -1,5 +1,5 @@
 import { PeerOrganization } from '@/interfaces/fabricNetworkApiPayloads';
-import { Step2FormValues } from '@/pages/dashboard';
+import { OrgFormData } from '@/types/orgFormData';
 
 export function createPayload(
   ordererOrganization: string,
@@ -30,9 +30,7 @@ export function createPayload(
   };
 }
 
-export function convertParticipants(
-  input: Step2FormValues[]
-): PeerOrganization[] {
+export function convertParticipants(input: OrgFormData[]): PeerOrganization[] {
   const output: PeerOrganization[] = [];
 
   for (const org of input) {
