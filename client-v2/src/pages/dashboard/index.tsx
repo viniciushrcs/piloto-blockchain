@@ -329,7 +329,7 @@ export default function Index() {
 
           setLoading(false);
           setStatus('Erro');
-          setOrganization(undefined);
+          // setOrganization(undefined);
         }
 
         if (!inProgress) {

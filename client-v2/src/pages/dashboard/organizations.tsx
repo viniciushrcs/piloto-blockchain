@@ -2,9 +2,9 @@ import { useOrganizationStore } from '@/stores/organization';
 
 export default function Organizations() {
   // TODO: Pluralize
-  const { organization } = useOrganizationStore();
+  const { organizations } = useOrganizationStore();
 
-  console.log(organization);
+  console.log(organizations);
 
   return <p>Oi!</p>;
 }

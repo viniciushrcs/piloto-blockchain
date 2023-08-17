@@ -3,23 +3,21 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 type State = {
-  organization: StartNetworkPayload;
+  organizations: StartNetworkPayload[];
   // eslint-disable-next-line no-unused-vars
-  setOrganization: (organization?: StartNetworkPayload) => void;
-};
-
-const INITIAL_STATE = {
-  organization: {
-    ordererOrganization: '',
-    peerOrganizations: []
-  }
+  setOrganization: (organization: StartNetworkPayload) => void;
 };
 
 export const useOrganizationStore = create<State>()(
   persist(
     (set) => ({
-      ...INITIAL_STATE,
-      setOrganization: (organization) => set({ organization })
+      organizations: [] as StartNetworkPayload[],
+      setOrganization: (organization) => {
+        set((state) => ({
+          ...state,
+          organizations: [...state.organizations, organization]
+        }));
+      }
     }),
     {
       name: 'organization-storage'
