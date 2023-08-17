@@ -1,5 +1,6 @@
 export const DASHBOARD_PATH = '/dashboard';
 export const SETTINGS_PATH = `${DASHBOARD_PATH}/settings`;
+export const ORGANIZATIONS_PATH = `${DASHBOARD_PATH}/organizations`;
 export const TASK_STATUS = {
   GENERATING_ARTIFACTS: 'Gerando artefatos',
   STARTING_KING: 'Iniciando o KIND',

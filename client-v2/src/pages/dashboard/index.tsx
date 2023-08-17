@@ -45,8 +45,10 @@ import { notifications } from '@mantine/notifications';
 import { convertParticipants } from '@/utils/helpers';
 import { StartNetworkPayload } from '@/interfaces/fabricNetworkApiPayloads';
 import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
-import { TASK_STATUS } from '@/utils/constants';
+import { ORGANIZATIONS_PATH, TASK_STATUS } from '@/utils/constants';
 import { format } from 'date-fns';
+import { useOrganizationStore } from '@/stores/organization';
+import Link from 'next/link';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -103,6 +105,8 @@ type Data = Step1FormValues | Step2FormValues;
 export default function Index() {
   const { classes } = useStyles();
 
+  const { setOrganization } = useOrganizationStore();
+
   const TRY_AGAING = true;
 
   const STEP_PLATFORM_DEFINITION = 0;
@@ -124,8 +128,6 @@ export default function Index() {
   const [step, setStep] = useState(0);
 
   const [flagRetry, setFlagRetry] = useState(Math.random());
-
-  console.log('step', step);
 
   const [status, setStatus] = useState('');
 
@@ -277,7 +279,9 @@ export default function Index() {
       peerOrganizations: formattedParticipants
     };
 
-    await FabricNetworkApiInstance.startNetwork(payload);
+    setOrganization(payload);
+
+    // await FabricNetworkApiInstance.startNetwork(payload);
   };
 
   const handleReset = (step: number = STEP_PLATFORM_DEFINITION) => {
@@ -325,6 +329,7 @@ export default function Index() {
 
           setLoading(false);
           setStatus('Erro');
+          setOrganization(undefined);
         }
 
         if (!inProgress) {
@@ -345,7 +350,7 @@ export default function Index() {
     }
 
     return () => clearInterval(intervalId);
-  }, [step, flagRetry]);
+  }, [step, flagRetry, setOrganization]);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
@@ -815,13 +820,15 @@ export default function Index() {
               dashboard da rede através do link abaixo.
             </Text>
             <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between">
-              <Button
-                size="md"
-                type="button"
-                leftIcon={<IconNetwork size={20} />}
-              >
-                Acessar dashboard
-              </Button>
+              <Link href={ORGANIZATIONS_PATH}>
+                <Button
+                  size="md"
+                  type="button"
+                  leftIcon={<IconNetwork size={20} />}
+                >
+                  Acessar dashboard
+                </Button>
+              </Link>
             </div>
           </Box>
         </Grid.Col>
