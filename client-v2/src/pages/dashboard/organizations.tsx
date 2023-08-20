@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useOrganizationStore } from '@/stores/organization';
 import {
   Container,
@@ -9,6 +10,7 @@ import {
   createStyles,
   rem
 } from '@mantine/core';
+import { OrgFormData } from '@/types/orgFormData';
 
 const useStyles = createStyles((theme) => ({
   card: {
@@ -29,7 +31,15 @@ const useStyles = createStyles((theme) => ({
 export default function Organizations() {
   const { classes } = useStyles();
 
-  const { organizations } = useOrganizationStore();
+  const [organizations, setOrganizations] = useState<OrgFormData[]>([]);
+
+  const { organizations: orgs } = useOrganizationStore();
+
+  useEffect(() => {
+    if (orgs) {
+      setOrganizations(orgs);
+    }
+  }, [orgs]);
 
   return (
     <Container size={'xl'}>
