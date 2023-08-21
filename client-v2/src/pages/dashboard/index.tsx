@@ -45,11 +45,11 @@ import { notifications } from '@mantine/notifications';
 import { convertParticipants } from '@/utils/helpers';
 import { StartNetworkPayload } from '@/interfaces/fabricNetworkApiPayloads';
 import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
-import { ORGANIZATIONS_PATH, TASK_STATUS } from '@/utils/constants';
+import { NETWORKS_PATH, TASK_STATUS } from '@/utils/constants';
 import { format } from 'date-fns';
-import { useOrganizationStore } from '@/stores/organization';
 import Link from 'next/link';
 import { OrgFormData } from '@/types/orgFormData';
+import { useNetworkStore } from '@/stores/network';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -99,7 +99,7 @@ type Data = InitialFormData | OrgFormData;
 export default function Index() {
   const { classes } = useStyles();
 
-  const { setOrganizations } = useOrganizationStore();
+  const { setNetworks } = useNetworkStore();
 
   const TRY_AGAING = true;
 
@@ -263,7 +263,12 @@ export default function Index() {
 
     setStartTime(new Date());
 
-    setOrganizations(participants);
+    const network = {
+      id: Math.floor(Math.random() * 1000000),
+      organizations: participants
+    };
+
+    setNetworks([network]);
 
     const formattedParticipants = convertParticipants(participants);
 
@@ -323,7 +328,7 @@ export default function Index() {
 
           setLoading(false);
           setStatus('Erro');
-          // setOrganizations(undefined);
+          // setNetworks(undefined);
         }
 
         if (!inProgress) {
@@ -344,7 +349,7 @@ export default function Index() {
     }
 
     return () => clearInterval(intervalId);
-  }, [step, flagRetry, setOrganizations]);
+  }, [step, flagRetry, setNetworks]);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
@@ -814,7 +819,7 @@ export default function Index() {
               dashboard da rede através do link abaixo.
             </Text>
             <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between">
-              <Link href={ORGANIZATIONS_PATH}>
+              <Link href={NETWORKS_PATH}>
                 <Button
                   size="md"
                   type="button"
