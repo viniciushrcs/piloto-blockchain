@@ -50,6 +50,7 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { OrgFormData } from '@/types/orgFormData';
 import { useNetworkStore } from '@/stores/network';
+import { applyNamingPattern } from '@/utils/applyNamingPattern';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -288,10 +289,6 @@ export default function Index() {
     setStatus('');
     setProgress(11);
     setParticipants([]);
-  };
-
-  const formatOrganizationName = (inputValue: string) => {
-    return inputValue.replace(/[^a-z0-9-]/g, '-').toLowerCase();
   };
 
   useEffect(() => {
@@ -578,9 +575,10 @@ export default function Index() {
               onChange={(event) => {
                 const { value } = event.currentTarget;
 
-                step2Form.setFieldValue('name', formatOrganizationName(value));
+                step2Form.setFieldValue('name', applyNamingPattern(value));
               }}
               value={step2Form.values.name}
+              error={step2Form.errors.name}
             />
             <Select
               withinPortal

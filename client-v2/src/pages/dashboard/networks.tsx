@@ -10,13 +10,38 @@ import {
   rem,
   Button,
   Modal,
-  Group
+  Group,
+  Center,
+  TextInput,
+  Tooltip
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useNetworkStore } from '@/stores/network';
 import { Network } from '@/types/network';
+import { hasLength, useForm } from '@mantine/form';
+import { IconInfoCircle, IconSquareX, IconTextPlus } from '@tabler/icons-react';
+import { Channel } from '@/types/channel';
+import { applyNamingPattern } from '@/utils/applyNamingPattern';
 
 const useStyles = createStyles((theme) => ({
+  root: {
+    position: 'relative'
+  },
+
+  input: {
+    height: rem(54),
+    paddingTop: rem(18)
+  },
+
+  label: {
+    position: 'absolute',
+    pointerEvents: 'none',
+    fontSize: theme.fontSizes.xs,
+    paddingLeft: theme.spacing.sm,
+    paddingTop: `calc(${theme.spacing.sm} / 2)`,
+    zIndex: 1
+  },
+
   card: {
     backgroundColor:
       theme.colorScheme === 'dark' ? theme.colors.dark[7] : theme.white
@@ -59,12 +84,37 @@ export default function Networks() {
 
   const [networks, setNetworks] = useState<Network[]>([]);
 
+  const [createChannel, setCreateChannel] = useState(false);
+
+  const channelForm = useForm<Channel>({
+    initialValues: {
+      name: ''
+    },
+    validate: {
+      name: hasLength({ min: 3 }, 'Você precisa informar o nome da canal')
+    }
+  });
+
   const handleOpen = (id: number) => {
     const network = getNetwork(id);
 
     setNetwork(network);
 
     open();
+  };
+
+  const handleCreateChannel = () => {
+    setCreateChannel(true);
+  };
+
+  const handleCancelChannelCreating = () => {
+    setCreateChannel(false);
+
+    channelForm.reset();
+  };
+
+  const onSubmitChannel = async (values: Channel) => {
+    console.log(values);
   };
 
   useEffect(() => {
@@ -120,9 +170,81 @@ export default function Networks() {
               </Group>
             </>
           ))}
-          <Button variant="default" color="blue" fullWidth mt="md" radius="md">
-            Criar canal
-          </Button>
+        </Card>
+        <Card className={classes.card}>
+          <Text className={classes.title} fw={500}>
+            Canais
+          </Text>
+          <Text fz="xs" c="dimmed" mt={3} mb="xl">
+            Gerencie os canais da rede
+          </Text>
+          <Box
+            hidden={!createChannel}
+            p="md"
+            sx={(theme) => ({
+              backgroundColor: theme.colors.gray[0],
+              border: `1px solid ${theme.colors.gray[2]}`,
+              borderRadius: theme.radius.md
+            })}
+            component="form"
+            onSubmit={channelForm.onSubmit(onSubmitChannel)}
+            className="space-y-4"
+          >
+            <Title order={6}>Definição do canal</Title>
+            <TextInput
+              withAsterisk
+              mb="md"
+              label="Nome do canal"
+              placeholder="Ex.: channel-name (sem espaços, caracteres especiais ou acentos...)"
+              classNames={classes}
+              rightSection={
+                <Tooltip
+                  label="O nome do canal deve ser único e não pode ser alterado após a criação"
+                  position="top-end"
+                  withArrow
+                  transitionProps={{ transition: 'pop-bottom-right' }}
+                >
+                  <Text color="dimmed" sx={{ cursor: 'help' }}>
+                    <Center>
+                      <IconInfoCircle size="1.1rem" stroke={1.5} />
+                    </Center>
+                  </Text>
+                </Tooltip>
+              }
+              onChange={(event) => {
+                const { value } = event.currentTarget;
+
+                channelForm.setFieldValue('name', applyNamingPattern(value));
+              }}
+              value={channelForm.values.name}
+              error={channelForm.errors.name}
+            />
+            <div className="space-x-2">
+              <Button type="submit" leftIcon={<IconTextPlus size={20} />}>
+                Criar canal
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                leftIcon={<IconSquareX size={20} />}
+                onClick={handleCancelChannelCreating}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </Box>
+          {!createChannel && (
+            <Button
+              variant="default"
+              color="blue"
+              fullWidth
+              mt="md"
+              radius="md"
+              onClick={handleCreateChannel}
+            >
+              Criar canal
+            </Button>
+          )}
         </Card>
         <Card className={classes.card}>
           <Text className={classes.title} fw={500}>
