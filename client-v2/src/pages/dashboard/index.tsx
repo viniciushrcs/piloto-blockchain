@@ -42,7 +42,6 @@ import {
   IconX
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { convertParticipants } from '@/utils/helpers';
 import { StartNetworkPayload } from '@/interfaces/fabricNetworkApiPayloads';
 import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
 import { NETWORKS_PATH, TASK_STATUS } from '@/utils/constants';
@@ -51,6 +50,7 @@ import Link from 'next/link';
 import { OrgFormData } from '@/types/orgFormData';
 import { useNetworkStore } from '@/stores/network';
 import { applyNamingPattern } from '@/utils/applyNamingPattern';
+import { convertParticipants } from '@/utils/convertParticipants';
 
 const useStyles = createStyles((theme) => ({
   root: {
