@@ -169,6 +169,7 @@ export default function Networks() {
           {network?.organizations?.map((organization) => (
             <>
               <Group
+                id={organization.id?.toString()}
                 position="apart"
                 className={classes.item}
                 noWrap
