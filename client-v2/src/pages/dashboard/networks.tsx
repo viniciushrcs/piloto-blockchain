@@ -13,15 +13,24 @@ import {
   Group,
   Center,
   TextInput,
-  Tooltip
+  Tooltip,
+  Alert
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useNetworkStore } from '@/stores/network';
 import { Network } from '@/types/network';
 import { hasLength, useForm } from '@mantine/form';
-import { IconInfoCircle, IconSquareX, IconTextPlus } from '@tabler/icons-react';
+import {
+  IconAlertCircle,
+  IconInfoCircle,
+  IconSquareX,
+  IconTextPlus
+} from '@tabler/icons-react';
 import { Channel } from '@/types/channel';
 import { applyNamingPattern } from '@/utils/applyNamingPattern';
+import { CreateChannelPayload } from '@/interfaces/fabricNetworkApiPayloads';
+import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
+import { convertParticipants } from '@/utils/convertParticipants';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -103,10 +112,6 @@ export default function Networks() {
     open();
   };
 
-  const handleCreateChannel = () => {
-    setCreateChannel(true);
-  };
-
   const handleCancelChannelCreating = () => {
     setCreateChannel(false);
 
@@ -114,7 +119,35 @@ export default function Networks() {
   };
 
   const onSubmitChannel = async (values: Channel) => {
-    console.log(values);
+    const channelName = values.name;
+
+    // TODO: Criar método para obter organização que possui nó ordenador
+    const ordererOrganization =
+      network?.organizations?.find(
+        (organization) => organization.hasOrderingNode === 1
+      )?.name || '';
+
+    // const peerOrganizations = network?.organizations?.filter(
+    //   (organization) => organization.hasOrderingNode === 0
+    // ).length as number;
+
+    const peerOrganizations = convertParticipants(
+      network?.organizations as Network['organizations']
+    );
+
+    console.log('aaaa: ', peerOrganizations, network?.organizations);
+
+    const payload: CreateChannelPayload = {
+      channelName,
+      ordererOrganization,
+      peerOrganizations
+    };
+
+    const response = await FabricNetworkApiInstance.createChannel(
+      payload as CreateChannelPayload
+    );
+
+    console.log(response);
   };
 
   useEffect(() => {
@@ -240,7 +273,7 @@ export default function Networks() {
               fullWidth
               mt="md"
               radius="md"
-              onClick={handleCreateChannel}
+              onClick={() => setCreateChannel(true)}
             >
               Criar canal
             </Button>

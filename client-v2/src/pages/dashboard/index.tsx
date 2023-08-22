@@ -300,6 +300,8 @@ export default function Index() {
           data: { inProgress, message }
         } = await FabricNetworkApiInstance.getStatus();
 
+        console.log('inProgress', inProgress, message);
+
         if (inProgress && message === TASK_STATUS.GENERATING_ARTIFACTS) {
           setStatus('Gerando artefatos');
           setProgress(25);
@@ -325,7 +327,7 @@ export default function Index() {
 
           setLoading(false);
           setStatus('Erro');
-          // setNetworks(undefined);
+          return;
         }
 
         if (!inProgress) {
