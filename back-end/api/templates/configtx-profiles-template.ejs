@@ -8,5 +8,5 @@
     Application:
       <<: *ApplicationDefaults
       Organizations:<% for (let i = 0; i < peerOrgs.length; i++) { %>
-        - *Org<%= i + 1 %><% } %>
+        - *Org<%= i %><% } %>
     Capabilities: *ApplicationCapabilities

@@ -50,7 +50,7 @@ export async function createChannel(specs, isDefault = false) {
   ]);
 }
 
-export async function chaincodeDeploy(specs) {
+export async function chaincodeDeploy(specs, selectedOrganization = null) {
   const {
     channelName,
     ordererOrganization,
@@ -58,10 +58,20 @@ export async function chaincodeDeploy(specs) {
     chaincodeName,
     chaincodePath,
   } = specs;
-  const peerOrgsInfo = peerOrganizations.map(
+
+  let orgsToDeploy = peerOrganizations;
+
+  if (selectedOrganization) {
+    orgsToDeploy = peerOrganizations.filter(
+      (org) => org.name === selectedOrganization
+    );
+  }
+
+  const peerOrgsInfo = orgsToDeploy.map(
     (org) => `${org.name}:${org.peers.join(',')}`
   );
-  const peerOrgsName = peerOrganizations.map((org) => `${org.name}`);
+  const peerOrgsName = orgsToDeploy.map((org) => `${org.name}`);
+
   let chaincodeCommited = false;
   let i = 0;
   for (const peerOrg of peerOrgsName) {
@@ -76,25 +86,34 @@ export async function chaincodeDeploy(specs) {
   }
 }
 
-export async function chaincodeInvoke(specs) {
+export async function chaincodeInvoke(specs, selectedOrganization = null) {
   const chaincodeInvokeCommandParsed = JSON.stringify(
     specs.chaincodeCommand.init
   );
-  const peerOrgsArgs = specs.peerOrganizations.map((org) => `${org.name}`);
+
+  const targetOrg = selectedOrganization || specs.peerOrganizations[0].name;
+
   await executeCommand([
-    `../network chaincode invoke ${specs.channelName} ${specs.chaincodeName} '${chaincodeInvokeCommandParsed}' ${specs.ordererOrganization} ${peerOrgsArgs[0]}`,
+    `../network chaincode invoke ${specs.channelName} ${specs.chaincodeName} '${chaincodeInvokeCommandParsed}' ${specs.ordererOrganization} ${targetOrg}`,
   ]);
 }
 
-export async function chaincodeQuery(specs) {
+export async function chaincodeQuery(specs, selectedOrganization = null) {
   const { channelName, ordererOrganization, chaincodeName } = specs;
   const chaincodeQueryCommandParsed = JSON.stringify(
     specs.chaincodeCommand.query
   );
-  const peerOrgsArgs = specs.peerOrganizations.map((org) => `${org.name}`);
-  for (const peerOrg of peerOrgsArgs) {
+
+  if (selectedOrganization) {
     await executeCommand([
-      `../network chaincode query ${channelName} ${chaincodeName} '${chaincodeQueryCommandParsed}' ${ordererOrganization} ${peerOrg}`,
+      `../network chaincode query ${channelName} ${chaincodeName} '${chaincodeQueryCommandParsed}' ${ordererOrganization} ${selectedOrganization}`,
     ]);
+  } else {
+    const peerOrgsArgs = specs.peerOrganizations.map((org) => `${org.name}`);
+    for (const peerOrg of peerOrgsArgs) {
+      await executeCommand([
+        `../network chaincode query ${channelName} ${chaincodeName} '${chaincodeQueryCommandParsed}' ${ordererOrganization} ${peerOrg}`,
+      ]);
+    }
   }
 }
