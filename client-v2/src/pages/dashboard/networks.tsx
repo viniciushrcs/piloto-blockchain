@@ -13,19 +13,13 @@ import {
   Group,
   Center,
   TextInput,
-  Tooltip,
-  Alert
+  Tooltip
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useNetworkStore } from '@/stores/network';
 import { Network } from '@/types/network';
 import { hasLength, useForm } from '@mantine/form';
-import {
-  IconAlertCircle,
-  IconInfoCircle,
-  IconSquareX,
-  IconTextPlus
-} from '@tabler/icons-react';
+import { IconInfoCircle, IconSquareX, IconTextPlus } from '@tabler/icons-react';
 import { Channel } from '@/types/channel';
 import { applyNamingPattern } from '@/utils/applyNamingPattern';
 import { CreateChannelPayload } from '@/interfaces/fabricNetworkApiPayloads';
@@ -124,7 +118,7 @@ export default function Networks() {
     // TODO: Criar método para obter organização que possui nó ordenador
     const ordererOrganization =
       network?.organizations?.find(
-        (organization) => organization.hasOrderingNode === 1
+        (organization) => organization.hasOrderingNode == 1
       )?.name || '';
 
     // const peerOrganizations = network?.organizations?.filter(
@@ -135,13 +129,13 @@ export default function Networks() {
       network?.organizations as Network['organizations']
     );
 
-    console.log('aaaa: ', peerOrganizations, network?.organizations);
-
     const payload: CreateChannelPayload = {
       channelName,
       ordererOrganization,
       peerOrganizations
     };
+
+    console.log(payload);
 
     const response = await FabricNetworkApiInstance.createChannel(
       payload as CreateChannelPayload
@@ -169,7 +163,7 @@ export default function Networks() {
           {network?.organizations?.map((organization) => (
             <>
               <Group
-                id={organization.id?.toString()}
+                key={organization.id}
                 position="apart"
                 className={classes.item}
                 noWrap
