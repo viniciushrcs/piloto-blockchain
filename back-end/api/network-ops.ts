@@ -34,8 +34,6 @@ export async function createChannel(specs, isDefault = false) {
   const peerOrgs = specs.peerOrganizations.map((org) => org.name);
   const peerOrgsList = specs.peerOrganizations.map((org) => org.name).join(' ');
 
-  console.log(peerOrgsArgs, peerOrgs, peerOrgsList);
-
   if (isDefault) {
     await executeCommand([
       `../network channel configtx ${specs.channelName} ${specs.ordererOrganization} ${peerOrgsList}`,

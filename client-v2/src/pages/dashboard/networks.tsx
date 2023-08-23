@@ -121,10 +121,6 @@ export default function Networks() {
         (organization) => organization.hasOrderingNode == 1
       )?.name || '';
 
-    // const peerOrganizations = network?.organizations?.filter(
-    //   (organization) => organization.hasOrderingNode === 0
-    // ).length as number;
-
     const peerOrganizations = convertParticipants(
       network?.organizations as Network['organizations']
     );
