@@ -42,11 +42,15 @@ import {
   IconX
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { convertParticipants } from '@/utils/helpers';
 import { StartNetworkPayload } from '@/interfaces/fabricNetworkApiPayloads';
 import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
-import { TASK_STATUS } from '@/utils/constants';
+import { NETWORKS_PATH, TASK_STATUS } from '@/utils/constants';
 import { format } from 'date-fns';
+import Link from 'next/link';
+import { OrgFormData } from '@/types/orgFormData';
+import { useNetworkStore } from '@/stores/network';
+import { applyNamingPattern } from '@/utils/applyNamingPattern';
+import { convertParticipants } from '@/utils/convertParticipants';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -87,21 +91,16 @@ const useStyles = createStyles((theme) => ({
   }
 }));
 
-type Step1FormValues = {
+type InitialFormData = {
   platform: string;
 };
 
-export type Step2FormValues = {
-  id?: number;
-  name: string;
-  hasOrderingNode: number;
-  numberOfPeers: number;
-};
-
-type Data = Step1FormValues | Step2FormValues;
+type Data = InitialFormData | OrgFormData;
 
 export default function Index() {
   const { classes } = useStyles();
+
+  const { setNetworks } = useNetworkStore();
 
   const TRY_AGAING = true;
 
@@ -119,13 +118,11 @@ export default function Index() {
 
   const [buttonName, setButtonName] = useState('Adicionar participante');
 
-  const [participants, setParticipants] = useState<Step2FormValues[]>([]);
+  const [participants, setParticipants] = useState<OrgFormData[]>([]);
 
   const [step, setStep] = useState(0);
 
   const [flagRetry, setFlagRetry] = useState(Math.random());
-
-  console.log('step', step);
 
   const [status, setStatus] = useState('');
 
@@ -137,7 +134,7 @@ export default function Index() {
 
   const [loading, setLoading] = useState(false);
 
-  const step1Form = useForm<Step1FormValues>({
+  const step1Form = useForm<InitialFormData>({
     initialValues: {
       platform: ''
     },
@@ -146,7 +143,7 @@ export default function Index() {
     }
   });
 
-  const step2Form = useForm<Step2FormValues>({
+  const step2Form = useForm<OrgFormData>({
     initialValues: {
       name: '',
       hasOrderingNode: -1,
@@ -188,12 +185,12 @@ export default function Index() {
     );
   };
 
-  const onSubmitStep1 = async (values: Step1FormValues) => {
+  const onSubmitStep1 = async (values: InitialFormData) => {
     setData(values);
     nextStep();
   };
 
-  const onSubmitStep2 = async (values: Step2FormValues) => {
+  const onSubmitStep2 = async (values: OrgFormData) => {
     const hasOrderingNode = participants.filter(
       (participant) =>
         participant.hasOrderingNode == 1 && participant.id != values.id
@@ -267,6 +264,13 @@ export default function Index() {
 
     setStartTime(new Date());
 
+    const network = {
+      id: Math.floor(Math.random() * 1000000),
+      organizations: participants
+    };
+
+    setNetworks([network]);
+
     const formattedParticipants = convertParticipants(participants);
 
     const payload: StartNetworkPayload = {
@@ -285,10 +289,6 @@ export default function Index() {
     setStatus('');
     setProgress(11);
     setParticipants([]);
-  };
-
-  const formatOrganizationName = (inputValue: string) => {
-    return inputValue.replace(/[^a-z0-9-]/g, '-').toLowerCase();
   };
 
   useEffect(() => {
@@ -325,6 +325,7 @@ export default function Index() {
 
           setLoading(false);
           setStatus('Erro');
+          return;
         }
 
         if (!inProgress) {
@@ -345,7 +346,7 @@ export default function Index() {
     }
 
     return () => clearInterval(intervalId);
-  }, [step, flagRetry]);
+  }, [step, flagRetry, setNetworks]);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
@@ -574,9 +575,10 @@ export default function Index() {
               onChange={(event) => {
                 const { value } = event.currentTarget;
 
-                step2Form.setFieldValue('name', formatOrganizationName(value));
+                step2Form.setFieldValue('name', applyNamingPattern(value));
               }}
               value={step2Form.values.name}
+              error={step2Form.errors.name}
             />
             <Select
               withinPortal
@@ -664,7 +666,7 @@ export default function Index() {
               <Text>
                 Confira os dados das organizações que serão criadas na rede
                 Blockchain usando a plataforma{' '}
-                <strong>{data && (data as Step1FormValues).platform}</strong>.
+                <strong>{data && (data as InitialFormData).platform}</strong>.
               </Text>
             </Alert>
             {participants?.map((participant) => (
@@ -815,13 +817,15 @@ export default function Index() {
               dashboard da rede através do link abaixo.
             </Text>
             <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between">
-              <Button
-                size="md"
-                type="button"
-                leftIcon={<IconNetwork size={20} />}
-              >
-                Acessar dashboard
-              </Button>
+              <Link href={NETWORKS_PATH}>
+                <Button
+                  size="md"
+                  type="button"
+                  leftIcon={<IconNetwork size={20} />}
+                >
+                  Acessar dashboard
+                </Button>
+              </Link>
             </div>
           </Box>
         </Grid.Col>

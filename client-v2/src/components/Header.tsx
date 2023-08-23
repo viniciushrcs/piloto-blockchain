@@ -146,7 +146,7 @@ export default function Header() {
   return (
     <MantineHeader height={HEADER_HEIGHT} mb={20} className={classes.root}>
       <Container className={classes.header} size={'xl'}>
-        <Link href={'#'}>
+        <Link href={'/'}>
           <Logo />
         </Link>
         <Group spacing={5} className={classes.links}>
