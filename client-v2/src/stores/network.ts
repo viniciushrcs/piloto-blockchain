@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { Channel } from '@/types/channel';
 import { Network } from '@/types/network';
+import { OrgFormData } from '@/types/orgFormData';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -9,6 +10,7 @@ type State = {
   setNetworks: (networks: Network[]) => void;
   getNetwork: (id: number) => Network | undefined;
   setChannel: (network: Network, channel: Channel) => void;
+  getOrganizations: (networkId: number) => OrgFormData[] | undefined;
 };
 
 export const useNetworkStore = create<State>()(
@@ -36,6 +38,13 @@ export const useNetworkStore = create<State>()(
         };
 
         set(() => ({ networks: newNetworks }));
+      },
+      getOrganizations: (networkId) => {
+        const { networks } = get();
+
+        const network = networks.find((n) => n.id === networkId);
+
+        return network?.organizations;
       }
     }),
     {

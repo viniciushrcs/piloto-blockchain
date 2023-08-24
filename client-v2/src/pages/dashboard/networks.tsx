@@ -13,7 +13,8 @@ import {
   Group,
   Center,
   TextInput,
-  Tooltip
+  Tooltip,
+  MultiSelect
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useNetworkStore } from '@/stores/network';
@@ -76,6 +77,11 @@ const useStyles = createStyles((theme) => ({
   }
 }));
 
+type OptionProps = {
+  label: string;
+  value: string;
+};
+
 export default function Networks() {
   const { classes } = useStyles();
 
@@ -89,9 +95,12 @@ export default function Networks() {
 
   const [createChannel, setCreateChannel] = useState(false);
 
+  const [optionPropsOrgs, setOptionPropsOrgs] = useState<OptionProps[]>([]);
+
   const channelForm = useForm<Channel>({
     initialValues: {
-      name: ''
+      name: '',
+      organizations: []
     },
     validate: {
       name: hasLength({ min: 3 }, 'Você precisa informar o nome da canal')
@@ -140,6 +149,27 @@ export default function Networks() {
     console.log(response);
   };
 
+  const handleCloseModal = () => {
+    close();
+
+    setTimeout(() => {
+      setNetwork(undefined);
+      setCreateChannel(false);
+      channelForm.reset();
+    }, 500);
+  };
+
+  useEffect(() => {
+    if (network) {
+      setOptionPropsOrgs(
+        network?.organizations?.map((organization) => ({
+          label: organization.name,
+          value: organization.name
+        })) as OptionProps[]
+      );
+    }
+  }, [network]);
+
   useEffect(() => {
     if (nets) {
       setNetworks(nets);
@@ -150,7 +180,7 @@ export default function Networks() {
     <>
       <Modal
         opened={opened}
-        onClose={close}
+        onClose={handleCloseModal}
         title={`Gerenciar rede / ID: ${network?.id}`}
         size={'lg'}
         centered
@@ -214,7 +244,7 @@ export default function Networks() {
             onSubmit={channelForm.onSubmit(onSubmitChannel)}
             className="space-y-4"
           >
-            <Title order={6}>Definição do canal</Title>
+            <Title order={6}>Definição de um novo canal</Title>
             <TextInput
               withAsterisk
               mb="md"
@@ -242,6 +272,17 @@ export default function Networks() {
               }}
               value={channelForm.values.name}
               error={channelForm.errors.name}
+            />
+            <MultiSelect
+              data={optionPropsOrgs}
+              searchable
+              placeholder="Selecione um ou mais organizações"
+              label="Organizações participantes"
+              // limit={20}
+              // valueComponent={Value}
+              // itemComponent={Item}
+              // defaultValue={['US', 'FI']}
+              {...channelForm.getInputProps('organizations')}
             />
             <div className="space-x-2">
               <Button type="submit" leftIcon={<IconTextPlus size={20} />}>
