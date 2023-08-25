@@ -816,7 +816,7 @@ export default function Index() {
               A rede Blockchain foi criada com sucesso! Você pode acessar o
               dashboard da rede através do link abaixo.
             </Text>
-            <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between">
+            <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:space-x-4">
               <Link href={NETWORKS_PATH}>
                 <Button
                   size="md"
@@ -824,6 +824,16 @@ export default function Index() {
                   leftIcon={<IconNetwork size={20} />}
                 >
                   Acessar dashboard
+                </Button>
+              </Link>
+              <Link href={'/'}>
+                <Button
+                  size="md"
+                  type="button"
+                  variant="default"
+                  leftIcon={<IconTextPlus size={20} />}
+                >
+                  Criar uma nova rede
                 </Button>
               </Link>
             </div>

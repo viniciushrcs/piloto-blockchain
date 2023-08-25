@@ -13,7 +13,8 @@ import {
   Group,
   Center,
   TextInput,
-  Tooltip
+  Tooltip,
+  MultiSelect
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useNetworkStore } from '@/stores/network';
@@ -25,6 +26,9 @@ import { applyNamingPattern } from '@/utils/applyNamingPattern';
 import { CreateChannelPayload } from '@/interfaces/fabricNetworkApiPayloads';
 import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
 import { convertParticipants } from '@/utils/convertParticipants';
+import { StatusCodes } from 'http-status-codes';
+import { notifications } from '@mantine/notifications';
+import { OrgFormData } from '@/types/orgFormData';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -76,12 +80,17 @@ const useStyles = createStyles((theme) => ({
   }
 }));
 
+type OptionProps = {
+  label: string;
+  value: string;
+};
+
 export default function Networks() {
   const { classes } = useStyles();
 
   const [opened, { open, close }] = useDisclosure(false);
 
-  const { networks: nets, getNetwork } = useNetworkStore();
+  const { networks: nets, getNetwork, setChannel } = useNetworkStore();
 
   const [network, setNetwork] = useState<Network | undefined>(undefined);
 
@@ -89,9 +98,14 @@ export default function Networks() {
 
   const [createChannel, setCreateChannel] = useState(false);
 
+  const [loading, setLoading] = useState(false);
+
+  const [optionPropsOrgs, setOptionPropsOrgs] = useState<OptionProps[]>([]);
+
   const channelForm = useForm<Channel>({
     initialValues: {
-      name: ''
+      name: '',
+      organizations: []
     },
     validate: {
       name: hasLength({ min: 3 }, 'Você precisa informar o nome da canal')
@@ -112,8 +126,35 @@ export default function Networks() {
     channelForm.reset();
   };
 
+  const getPeerOrganizations = (organizations?: string[]) => {
+    if (organizations?.length) {
+      const orgs = organizations
+        .map(
+          (organizationId) =>
+            network?.organizations?.find(
+              (org) => org.id?.toString() === organizationId
+            )
+        )
+        .filter((organization) => organization) as OrgFormData[];
+
+      return convertParticipants(orgs);
+    }
+
+    return convertParticipants(
+      network?.organizations as Network['organizations']
+    );
+  };
+
   const onSubmitChannel = async (values: Channel) => {
+    setLoading(true);
+
     const channelName = values.name;
+
+    const organizations = values.organizations?.length
+      ? values.organizations
+      : (network?.organizations?.map(
+          (organization) => organization.name
+        ) as []);
 
     // TODO: Criar método para obter organização que possui nó ordenador
     const ordererOrganization =
@@ -121,9 +162,7 @@ export default function Networks() {
         (organization) => organization.hasOrderingNode == 1
       )?.name || '';
 
-    const peerOrganizations = convertParticipants(
-      network?.organizations as Network['organizations']
-    );
+    const peerOrganizations = getPeerOrganizations(values.organizations);
 
     const payload: CreateChannelPayload = {
       channelName,
@@ -131,14 +170,61 @@ export default function Networks() {
       peerOrganizations
     };
 
-    console.log(payload);
-
-    const response = await FabricNetworkApiInstance.createChannel(
+    const { status } = await FabricNetworkApiInstance.createChannel(
       payload as CreateChannelPayload
     );
 
-    console.log(response);
+    if (status === StatusCodes.OK) {
+      const networkId = network?.id as number;
+
+      setChannel(networkId, channelName, organizations);
+
+      handleCancelChannelCreating();
+
+      const updateNetwork = getNetwork(networkId);
+
+      setNetwork(updateNetwork);
+
+      notifications.show({
+        title: 'Canal criado com sucesso!',
+        message: `O canal ${channelName} foi criado com sucesso`,
+        color: 'green',
+        icon: <IconTextPlus size={20} />,
+        autoClose: 5000
+      });
+    } else {
+      notifications.show({
+        title: 'Erro ao criar canal!',
+        message: `Ocorreu um erro ao criar o canal ${channelName}`,
+        color: 'red',
+        icon: <IconSquareX size={20} />,
+        autoClose: 5000
+      });
+    }
+
+    setLoading(false);
   };
+
+  const handleCloseModal = () => {
+    close();
+
+    setTimeout(() => {
+      setNetwork(undefined);
+      setCreateChannel(false);
+      channelForm.reset();
+    }, 500);
+  };
+
+  useEffect(() => {
+    if (network) {
+      setOptionPropsOrgs(
+        network?.organizations?.map((organization) => ({
+          label: organization.name,
+          value: organization.name
+        })) as OptionProps[]
+      );
+    }
+  }, [network]);
 
   useEffect(() => {
     if (nets) {
@@ -150,7 +236,7 @@ export default function Networks() {
     <>
       <Modal
         opened={opened}
-        onClose={close}
+        onClose={handleCloseModal}
         title={`Gerenciar rede / ID: ${network?.id}`}
         size={'lg'}
         centered
@@ -195,13 +281,50 @@ export default function Networks() {
             </>
           ))}
         </Card>
-        <Card className={classes.card}>
+        <Card classNames={classes.card}>
           <Text className={classes.title} fw={500}>
             Canais
           </Text>
-          <Text fz="xs" c="dimmed" mt={3} mb="xl">
+          <Text
+            fz="xs"
+            c="dimmed"
+            mt={3}
+            mb={network?.channels?.length ? 0 : 'xs'}
+          >
             Gerencie os canais da rede
           </Text>
+          {network?.channels && (
+            <Card className={classes.card} withBorder mb={'xs'}>
+              {network?.channels?.map((channel) => (
+                <>
+                  <Group
+                    key={Math.random()}
+                    position="apart"
+                    className={classes.item}
+                    noWrap
+                    spacing="xl"
+                  >
+                    <div>
+                      <Text size="xs" color="dimmed">
+                        Nome do canal
+                      </Text>
+                      <Text>{channel?.name}</Text>
+                    </div>
+                    <div>
+                      <Text size="xs" color="dimmed" ta="end">
+                        Organizações
+                      </Text>
+                      <Text>
+                        {channel?.organizations
+                          ?.map((organization) => organization)
+                          .join(', ')}
+                      </Text>
+                    </div>
+                  </Group>
+                </>
+              ))}
+            </Card>
+          )}
           <Box
             hidden={!createChannel}
             p="md"
@@ -214,13 +337,14 @@ export default function Networks() {
             onSubmit={channelForm.onSubmit(onSubmitChannel)}
             className="space-y-4"
           >
-            <Title order={6}>Definição do canal</Title>
+            <Title order={6}>Definição de um novo canal</Title>
             <TextInput
               withAsterisk
               mb="md"
               label="Nome do canal"
               placeholder="Ex.: channel-name (sem espaços, caracteres especiais ou acentos...)"
               classNames={classes}
+              disabled={loading}
               rightSection={
                 <Tooltip
                   label="O nome do canal deve ser único e não pode ser alterado após a criação"
@@ -243,8 +367,27 @@ export default function Networks() {
               value={channelForm.values.name}
               error={channelForm.errors.name}
             />
+            <div>
+              <MultiSelect
+                disabled={loading}
+                data={optionPropsOrgs}
+                searchable
+                placeholder="Deixe em branco ou selecione um ou mais organizações"
+                label="Organizações (Deixe o campo em branco p/ criar um canal para todas)"
+                classNames={classes}
+                // limit={20}
+                // valueComponent={Value}
+                // itemComponent={Item}
+                // defaultValue={['US', 'FI']}
+                {...channelForm.getInputProps('organizations')}
+              />
+            </div>
             <div className="space-x-2">
-              <Button type="submit" leftIcon={<IconTextPlus size={20} />}>
+              <Button
+                type="submit"
+                leftIcon={<IconTextPlus size={20} />}
+                loading={loading}
+              >
                 Criar canal
               </Button>
               <Button
@@ -252,6 +395,7 @@ export default function Networks() {
                 variant="default"
                 leftIcon={<IconSquareX size={20} />}
                 onClick={handleCancelChannelCreating}
+                disabled={loading}
               >
                 Cancelar
               </Button>

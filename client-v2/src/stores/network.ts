@@ -1,6 +1,8 @@
 /* eslint-disable no-unused-vars */
+import { PeerOrganization } from '@/interfaces/fabricNetworkApiPayloads';
 import { Channel } from '@/types/channel';
 import { Network } from '@/types/network';
+import { OrgFormData } from '@/types/orgFormData';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -8,7 +10,12 @@ type State = {
   networks: Network[];
   setNetworks: (networks: Network[]) => void;
   getNetwork: (id: number) => Network | undefined;
-  setChannel: (network: Network, channel: Channel) => void;
+  setChannel: (
+    networkId: number,
+    channelName: string,
+    organizations: string[]
+  ) => void;
+  getOrganizations: (networkId: number) => OrgFormData[] | undefined;
 };
 
 export const useNetworkStore = create<State>()(
@@ -23,19 +30,32 @@ export const useNetworkStore = create<State>()(
 
         return networks.find((network) => network.id === id);
       },
-      setChannel: (network, channel) => {
+      setChannel: (networkId, channelName, organizations) => {
         const { networks } = get();
 
-        const networkIndex = networks.findIndex((n) => n.id === network.id);
+        const updatedNetworks = networks.map((network) => {
+          if (network.id === networkId) {
+            const channel: Channel = {
+              name: channelName,
+              organizations
+            };
 
-        const newNetworks = [...networks];
+            return {
+              ...network,
+              channels: [...(network.channels || []), channel] // Add the new channel
+            };
+          }
+          return network;
+        });
 
-        newNetworks[networkIndex] = {
-          ...network,
-          channels: [...(network.channels ?? []), channel]
-        };
+        set(() => ({ networks: updatedNetworks }));
+      },
+      getOrganizations: (networkId) => {
+        const { networks } = get();
 
-        set(() => ({ networks: newNetworks }));
+        const network = networks.find((n) => n.id === networkId);
+
+        return network?.organizations;
       }
     }),
     {
