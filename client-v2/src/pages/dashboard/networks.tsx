@@ -26,6 +26,8 @@ import { applyNamingPattern } from '@/utils/applyNamingPattern';
 import { CreateChannelPayload } from '@/interfaces/fabricNetworkApiPayloads';
 import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
 import { convertParticipants } from '@/utils/convertParticipants';
+import { StatusCodes } from 'http-status-codes';
+import { notifications } from '@mantine/notifications';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -87,13 +89,15 @@ export default function Networks() {
 
   const [opened, { open, close }] = useDisclosure(false);
 
-  const { networks: nets, getNetwork } = useNetworkStore();
+  const { networks: nets, getNetwork, setChannel } = useNetworkStore();
 
   const [network, setNetwork] = useState<Network | undefined>(undefined);
 
   const [networks, setNetworks] = useState<Network[]>([]);
 
   const [createChannel, setCreateChannel] = useState(false);
+
+  const [loading, setLoading] = useState(false);
 
   const [optionPropsOrgs, setOptionPropsOrgs] = useState<OptionProps[]>([]);
 
@@ -122,6 +126,8 @@ export default function Networks() {
   };
 
   const onSubmitChannel = async (values: Channel) => {
+    setLoading(true);
+
     const channelName = values.name;
 
     // TODO: Criar método para obter organização que possui nó ordenador
@@ -130,6 +136,7 @@ export default function Networks() {
         (organization) => organization.hasOrderingNode == 1
       )?.name || '';
 
+    // TODO 0: Selecionar organizações de acordo com o select
     const peerOrganizations = convertParticipants(
       network?.organizations as Network['organizations']
     );
@@ -142,11 +149,33 @@ export default function Networks() {
 
     console.log(payload);
 
-    const response = await FabricNetworkApiInstance.createChannel(
+    const { status } = await FabricNetworkApiInstance.createChannel(
       payload as CreateChannelPayload
     );
 
-    console.log(response);
+    if (status === StatusCodes.OK) {
+      const networkId = network?.id as number;
+
+      setChannel(networkId, channelName);
+
+      notifications.show({
+        title: 'Canal criado com sucesso!',
+        message: `O canal ${channelName} foi criado com sucesso`,
+        color: 'green',
+        icon: <IconTextPlus size={20} />,
+        autoClose: 5000
+      });
+    } else {
+      notifications.show({
+        title: 'Erro ao criar canal!',
+        message: `Ocorreu um erro ao criar o canal ${channelName}`,
+        color: 'red',
+        icon: <IconSquareX size={20} />,
+        autoClose: 5000
+      });
+    }
+
+    setLoading(false);
   };
 
   const handleCloseModal = () => {
@@ -225,13 +254,48 @@ export default function Networks() {
             </>
           ))}
         </Card>
-        <Card className={classes.card}>
+        <Card classNames={classes.card}>
           <Text className={classes.title} fw={500}>
             Canais
           </Text>
-          <Text fz="xs" c="dimmed" mt={3} mb="xl">
+          <Text
+            fz="xs"
+            c="dimmed"
+            mt={3}
+            mb={network?.channels?.length ? 0 : 'xs'}
+          >
             Gerencie os canais da rede
           </Text>
+          <Card className={classes.card} withBorder mb={'xs'}>
+            {network?.channels?.map((channel) => (
+              <>
+                <Group
+                  key={Math.random()}
+                  position="apart"
+                  className={classes.item}
+                  noWrap
+                  spacing="xl"
+                >
+                  <div>
+                    <Text size="xs" color="dimmed">
+                      Nome do canal
+                    </Text>
+                    <Text>{channel?.name}</Text>
+                  </div>
+                  <div>
+                    <Text size="xs" color="dimmed">
+                      Organizações
+                    </Text>
+                    <Text>
+                      {channel?.organizations
+                        ?.map((organization) => organization)
+                        .join(', ')}
+                    </Text>
+                  </div>
+                </Group>
+              </>
+            ))}
+          </Card>
           <Box
             hidden={!createChannel}
             p="md"
@@ -273,19 +337,26 @@ export default function Networks() {
               value={channelForm.values.name}
               error={channelForm.errors.name}
             />
-            <MultiSelect
-              data={optionPropsOrgs}
-              searchable
-              placeholder="Selecione um ou mais organizações"
-              label="Organizações participantes"
-              // limit={20}
-              // valueComponent={Value}
-              // itemComponent={Item}
-              // defaultValue={['US', 'FI']}
-              {...channelForm.getInputProps('organizations')}
-            />
+            <div>
+              <MultiSelect
+                data={optionPropsOrgs}
+                searchable
+                placeholder="Deixe em branco ou selecione um ou mais organizações"
+                label="Organizações (Deixe o campo em branco p/ criar um canal para todas)"
+                classNames={classes}
+                // limit={20}
+                // valueComponent={Value}
+                // itemComponent={Item}
+                // defaultValue={['US', 'FI']}
+                {...channelForm.getInputProps('organizations')}
+              />
+            </div>
             <div className="space-x-2">
-              <Button type="submit" leftIcon={<IconTextPlus size={20} />}>
+              <Button
+                type="submit"
+                leftIcon={<IconTextPlus size={20} />}
+                loading={loading}
+              >
                 Criar canal
               </Button>
               <Button
@@ -293,6 +364,7 @@ export default function Networks() {
                 variant="default"
                 leftIcon={<IconSquareX size={20} />}
                 onClick={handleCancelChannelCreating}
+                disabled={loading}
               >
                 Cancelar
               </Button>

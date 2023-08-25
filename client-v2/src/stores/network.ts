@@ -9,7 +9,7 @@ type State = {
   networks: Network[];
   setNetworks: (networks: Network[]) => void;
   getNetwork: (id: number) => Network | undefined;
-  setChannel: (network: Network, channel: Channel) => void;
+  setChannel: (networkId: number, channelName: string) => void;
   getOrganizations: (networkId: number) => OrgFormData[] | undefined;
 };
 
@@ -25,19 +25,25 @@ export const useNetworkStore = create<State>()(
 
         return networks.find((network) => network.id === id);
       },
-      setChannel: (network, channel) => {
+      setChannel: (networkId, channelName) => {
         const { networks } = get();
 
-        const networkIndex = networks.findIndex((n) => n.id === network.id);
+        const updatedNetworks = networks.map((network) => {
+          if (network.id === networkId) {
+            const channel: Channel = {
+              name: channelName,
+              organizations: network?.organizations?.map((org) => org.name)
+            };
 
-        const newNetworks = [...networks];
+            return {
+              ...network,
+              channels: [...(network.channels || []), channel] // Add the new channel
+            };
+          }
+          return network;
+        });
 
-        newNetworks[networkIndex] = {
-          ...network,
-          channels: [...(network.channels ?? []), channel]
-        };
-
-        set(() => ({ networks: newNetworks }));
+        set(() => ({ networks: updatedNetworks }));
       },
       getOrganizations: (networkId) => {
         const { networks } = get();
