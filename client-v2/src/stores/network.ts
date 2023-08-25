@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars */
+import { PeerOrganization } from '@/interfaces/fabricNetworkApiPayloads';
 import { Channel } from '@/types/channel';
 import { Network } from '@/types/network';
 import { OrgFormData } from '@/types/orgFormData';
@@ -9,7 +10,11 @@ type State = {
   networks: Network[];
   setNetworks: (networks: Network[]) => void;
   getNetwork: (id: number) => Network | undefined;
-  setChannel: (networkId: number, channelName: string) => void;
+  setChannel: (
+    networkId: number,
+    channelName: string,
+    organizations: string[]
+  ) => void;
   getOrganizations: (networkId: number) => OrgFormData[] | undefined;
 };
 
@@ -25,14 +30,14 @@ export const useNetworkStore = create<State>()(
 
         return networks.find((network) => network.id === id);
       },
-      setChannel: (networkId, channelName) => {
+      setChannel: (networkId, channelName, organizations) => {
         const { networks } = get();
 
         const updatedNetworks = networks.map((network) => {
           if (network.id === networkId) {
             const channel: Channel = {
               name: channelName,
-              organizations: network?.organizations?.map((org) => org.name)
+              organizations
             };
 
             return {

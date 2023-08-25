@@ -28,6 +28,7 @@ import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
 import { convertParticipants } from '@/utils/convertParticipants';
 import { StatusCodes } from 'http-status-codes';
 import { notifications } from '@mantine/notifications';
+import { OrgFormData } from '@/types/orgFormData';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -125,10 +126,35 @@ export default function Networks() {
     channelForm.reset();
   };
 
+  const getPeerOrganizations = (organizations?: string[]) => {
+    if (organizations?.length) {
+      const orgs = organizations
+        .map(
+          (organizationId) =>
+            network?.organizations?.find(
+              (org) => org.id?.toString() === organizationId
+            )
+        )
+        .filter((organization) => organization) as OrgFormData[];
+
+      return convertParticipants(orgs);
+    }
+
+    return convertParticipants(
+      network?.organizations as Network['organizations']
+    );
+  };
+
   const onSubmitChannel = async (values: Channel) => {
     setLoading(true);
 
     const channelName = values.name;
+
+    const organizations = values.organizations?.length
+      ? values.organizations
+      : (network?.organizations?.map(
+          (organization) => organization.name
+        ) as []);
 
     // TODO: Criar método para obter organização que possui nó ordenador
     const ordererOrganization =
@@ -136,18 +162,13 @@ export default function Networks() {
         (organization) => organization.hasOrderingNode == 1
       )?.name || '';
 
-    // TODO 0: Selecionar organizações de acordo com o select
-    const peerOrganizations = convertParticipants(
-      network?.organizations as Network['organizations']
-    );
+    const peerOrganizations = getPeerOrganizations(values.organizations);
 
     const payload: CreateChannelPayload = {
       channelName,
       ordererOrganization,
       peerOrganizations
     };
-
-    console.log(payload);
 
     const { status } = await FabricNetworkApiInstance.createChannel(
       payload as CreateChannelPayload
@@ -156,7 +177,13 @@ export default function Networks() {
     if (status === StatusCodes.OK) {
       const networkId = network?.id as number;
 
-      setChannel(networkId, channelName);
+      setChannel(networkId, channelName, organizations);
+
+      handleCancelChannelCreating();
+
+      const updateNetwork = getNetwork(networkId);
+
+      setNetwork(updateNetwork);
 
       notifications.show({
         title: 'Canal criado com sucesso!',
@@ -266,36 +293,38 @@ export default function Networks() {
           >
             Gerencie os canais da rede
           </Text>
-          <Card className={classes.card} withBorder mb={'xs'}>
-            {network?.channels?.map((channel) => (
-              <>
-                <Group
-                  key={Math.random()}
-                  position="apart"
-                  className={classes.item}
-                  noWrap
-                  spacing="xl"
-                >
-                  <div>
-                    <Text size="xs" color="dimmed">
-                      Nome do canal
-                    </Text>
-                    <Text>{channel?.name}</Text>
-                  </div>
-                  <div>
-                    <Text size="xs" color="dimmed">
-                      Organizações
-                    </Text>
-                    <Text>
-                      {channel?.organizations
-                        ?.map((organization) => organization)
-                        .join(', ')}
-                    </Text>
-                  </div>
-                </Group>
-              </>
-            ))}
-          </Card>
+          {network?.channels && (
+            <Card className={classes.card} withBorder mb={'xs'}>
+              {network?.channels?.map((channel) => (
+                <>
+                  <Group
+                    key={Math.random()}
+                    position="apart"
+                    className={classes.item}
+                    noWrap
+                    spacing="xl"
+                  >
+                    <div>
+                      <Text size="xs" color="dimmed">
+                        Nome do canal
+                      </Text>
+                      <Text>{channel?.name}</Text>
+                    </div>
+                    <div>
+                      <Text size="xs" color="dimmed" ta="end">
+                        Organizações
+                      </Text>
+                      <Text>
+                        {channel?.organizations
+                          ?.map((organization) => organization)
+                          .join(', ')}
+                      </Text>
+                    </div>
+                  </Group>
+                </>
+              ))}
+            </Card>
+          )}
           <Box
             hidden={!createChannel}
             p="md"
@@ -315,6 +344,7 @@ export default function Networks() {
               label="Nome do canal"
               placeholder="Ex.: channel-name (sem espaços, caracteres especiais ou acentos...)"
               classNames={classes}
+              disabled={loading}
               rightSection={
                 <Tooltip
                   label="O nome do canal deve ser único e não pode ser alterado após a criação"
@@ -339,6 +369,7 @@ export default function Networks() {
             />
             <div>
               <MultiSelect
+                disabled={loading}
                 data={optionPropsOrgs}
                 searchable
                 placeholder="Deixe em branco ou selecione um ou mais organizações"
