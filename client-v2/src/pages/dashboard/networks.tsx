@@ -14,7 +14,8 @@ import {
   Center,
   TextInput,
   Tooltip,
-  MultiSelect
+  MultiSelect,
+  Select
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useNetworkStore } from '@/stores/network';
@@ -23,7 +24,10 @@ import { hasLength, useForm } from '@mantine/form';
 import { IconInfoCircle, IconSquareX, IconTextPlus } from '@tabler/icons-react';
 import { Channel } from '@/types/channel';
 import { applyNamingPattern } from '@/utils/applyNamingPattern';
-import { CreateChannelPayload } from '@/interfaces/fabricNetworkApiPayloads';
+import {
+  CreateChannelPayload,
+  DeployChaincodePayload
+} from '@/interfaces/fabricNetworkApiPayloads';
 import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
 import { convertParticipants } from '@/utils/convertParticipants';
 import { StatusCodes } from 'http-status-codes';
@@ -85,6 +89,10 @@ type OptionProps = {
   value: string;
 };
 
+type ChainCode = {
+  params: string;
+};
+
 export default function Networks() {
   const { classes } = useStyles();
 
@@ -97,6 +105,8 @@ export default function Networks() {
   const [networks, setNetworks] = useState<Network[]>([]);
 
   const [createChannel, setCreateChannel] = useState(false);
+
+  const [createChainCode, setCreateChainCode] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -112,6 +122,15 @@ export default function Networks() {
     }
   });
 
+  const chainCodeForm = useForm<ChainCode>({
+    initialValues: {
+      params: ''
+    },
+    validate: {
+      params: hasLength({ min: 3 }, 'Você precisa informar os parâmetros')
+    }
+  });
+
   const handleOpen = (id: number) => {
     const network = getNetwork(id);
 
@@ -124,6 +143,12 @@ export default function Networks() {
     setCreateChannel(false);
 
     channelForm.reset();
+  };
+
+  const handleCancelChainCodeCreating = () => {
+    setCreateChainCode(false);
+
+    chainCodeForm.reset();
   };
 
   const getPeerOrganizations = (organizations?: string[]) => {
@@ -143,6 +168,41 @@ export default function Networks() {
     return convertParticipants(
       network?.organizations as Network['organizations']
     );
+  };
+
+  const onSubmitChainCode = async (values: ChainCode) => {
+    console.log(values);
+
+    // const payload = createPayload(
+    //   ordererOrganization,
+    //   peerOrganizations,
+    //   "channelname",
+    //   "asset-transfer-basic",
+    //   "chaincode-typescript"
+    // );
+    // const response = await FabricNetworkApi.deployChaincode(
+    //   payload as DeployChaincodePayload
+    // );
+
+    // TODO: Criar método para obter organização que possui nó ordenador
+    const ordererOrganization =
+      network?.organizations?.find(
+        (organization) => organization.hasOrderingNode == 1
+      )?.name || '';
+
+    const peerOrganizations = getPeerOrganizations();
+
+    const payload: DeployChaincodePayload = {
+      chaincodeName: values.params,
+      chaincodePath: values.params,
+      channelName: 'channel-name', // ????
+      ordererOrganization,
+      peerOrganizations
+    };
+
+    const response = await FabricNetworkApiInstance.deployChaincode(payload);
+
+    console.log(response);
   };
 
   const onSubmitChannel = async (values: Channel) => {
@@ -170,9 +230,7 @@ export default function Networks() {
       peerOrganizations
     };
 
-    const { status } = await FabricNetworkApiInstance.createChannel(
-      payload as CreateChannelPayload
-    );
+    const { status } = await FabricNetworkApiInstance.createChannel(payload);
 
     if (status === StatusCodes.OK) {
       const networkId = network?.id as number;
@@ -421,9 +479,63 @@ export default function Networks() {
           <Text fz="xs" c="dimmed" mt={3} mb="xl">
             Gerencie os chaincodes da rede
           </Text>
-          <Button variant="default" color="blue" fullWidth mt="md" radius="md">
-            Implementar chaincode
-          </Button>
+          <Box
+            hidden={!createChainCode}
+            p="md"
+            sx={(theme) => ({
+              backgroundColor: theme.colors.gray[0],
+              border: `1px solid ${theme.colors.gray[2]}`,
+              borderRadius: theme.radius.md
+            })}
+            component="form"
+            onSubmit={chainCodeForm.onSubmit(onSubmitChainCode)}
+            className="space-y-4"
+          >
+            <Title order={6}>Definição de um novo chaincode</Title>
+            <Select
+              disabled={loading}
+              data={[
+                { label: 'Asset Transfer', value: 'asset-transfer' },
+                { label: 'Logistics', value: 'logistics' },
+                { label: 'Energy Trade', value: 'energy-trade' }
+              ]}
+              searchable
+              placeholder="Parâmetros"
+              label="Selecione um parâmetro"
+              classNames={classes}
+              {...chainCodeForm.getInputProps('params')}
+            />
+            <div className="space-x-2">
+              <Button
+                type="submit"
+                leftIcon={<IconTextPlus size={20} />}
+                loading={loading}
+              >
+                Implantar
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                leftIcon={<IconSquareX size={20} />}
+                onClick={handleCancelChainCodeCreating}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </Box>
+          {!createChainCode && (
+            <Button
+              variant="default"
+              color="blue"
+              fullWidth
+              mt="md"
+              radius="md"
+              onClick={() => setCreateChainCode(true)}
+            >
+              Implantar chaincode
+            </Button>
+          )}
           <Button variant="default" color="blue" fullWidth mt="md" radius="md">
             Executar chaincode
           </Button>
