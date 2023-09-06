@@ -289,8 +289,6 @@ export default function Networks() {
   }, [nets]);
 
   useEffect(() => {
-    console.log('network -->', network);
-
     if (createChainCode && network?.channels?.length) {
       setOptionPropsChannels(
         network?.channels?.map((channel) => ({
