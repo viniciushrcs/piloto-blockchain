@@ -91,6 +91,7 @@ type OptionProps = {
 
 type ChainCode = {
   params: string;
+  channel: string;
 };
 
 export default function Networks() {
@@ -112,6 +113,10 @@ export default function Networks() {
 
   const [optionPropsOrgs, setOptionPropsOrgs] = useState<OptionProps[]>([]);
 
+  const [optionPropsChannels, setOptionPropsChannels] = useState<OptionProps[]>(
+    []
+  );
+
   const channelForm = useForm<Channel>({
     initialValues: {
       name: '',
@@ -124,10 +129,12 @@ export default function Networks() {
 
   const chainCodeForm = useForm<ChainCode>({
     initialValues: {
-      params: ''
+      params: '',
+      channel: ''
     },
     validate: {
-      params: hasLength({ min: 3 }, 'Você precisa informar os parâmetros')
+      params: hasLength({ min: 3 }, 'Você precisa informar os parâmetros'),
+      channel: hasLength({ min: 3 }, 'Você precisa informar o canal')
     }
   });
 
@@ -171,19 +178,6 @@ export default function Networks() {
   };
 
   const onSubmitChainCode = async (values: ChainCode) => {
-    console.log(values);
-
-    // const payload = createPayload(
-    //   ordererOrganization,
-    //   peerOrganizations,
-    //   "channelname",
-    //   "asset-transfer-basic",
-    //   "chaincode-typescript"
-    // );
-    // const response = await FabricNetworkApi.deployChaincode(
-    //   payload as DeployChaincodePayload
-    // );
-
     // TODO: Criar método para obter organização que possui nó ordenador
     const ordererOrganization =
       network?.organizations?.find(
@@ -193,11 +187,11 @@ export default function Networks() {
     const peerOrganizations = getPeerOrganizations();
 
     const payload: DeployChaincodePayload = {
-      chaincodeName: values.params,
-      chaincodePath: values.params,
-      channelName: 'channel-name', // ????
       ordererOrganization,
-      peerOrganizations
+      peerOrganizations,
+      channelName: values.channel,
+      chaincodeName: values.params,
+      chaincodePath: 'chaincode-typescript'
     };
 
     const response = await FabricNetworkApiInstance.deployChaincode(payload);
@@ -268,8 +262,12 @@ export default function Networks() {
 
     setTimeout(() => {
       setNetwork(undefined);
+
       setCreateChannel(false);
       channelForm.reset();
+
+      setCreateChainCode(false);
+      chainCodeForm.reset();
     }, 500);
   };
 
@@ -290,13 +288,26 @@ export default function Networks() {
     }
   }, [nets]);
 
+  useEffect(() => {
+    console.log('network -->', network);
+
+    if (createChainCode && network?.channels?.length) {
+      setOptionPropsChannels(
+        network?.channels?.map((channel) => ({
+          label: channel.name,
+          value: channel.name
+        })) as OptionProps[]
+      );
+    }
+  }, [createChainCode, network]);
+
   return (
     <>
       <Modal
         opened={opened}
         onClose={handleCloseModal}
         title={`Gerenciar rede / ID: ${network?.id}`}
-        size={'lg'}
+        size={'xl'}
         centered
       >
         <Card className={classes.card}>
@@ -492,6 +503,15 @@ export default function Networks() {
             className="space-y-4"
           >
             <Title order={6}>Definição de um novo chaincode</Title>
+            <Select
+              disabled={loading}
+              data={optionPropsChannels}
+              searchable
+              placeholder="Selecione um canal"
+              label="Selecione um canal"
+              classNames={classes}
+              {...chainCodeForm.getInputProps('channel')}
+            />
             <Select
               disabled={loading}
               data={[

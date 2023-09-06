@@ -16,6 +16,7 @@ type State = {
     organizations: string[]
   ) => void;
   getOrganizations: (networkId: number) => OrgFormData[] | undefined;
+  getChannels: (networkId: number) => Channel[] | undefined;
 };
 
 export const useNetworkStore = create<State>()(
@@ -56,6 +57,13 @@ export const useNetworkStore = create<State>()(
         const network = networks.find((n) => n.id === networkId);
 
         return network?.organizations;
+      },
+      getChannels: (networkId) => {
+        const { networks } = get();
+
+        const network = networks.find((n) => n.id === networkId);
+
+        return network?.channels;
       }
     }),
     {
