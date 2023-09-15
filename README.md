@@ -56,7 +56,7 @@ Se tudo ocorreu sem problemas, você deve ver as seguintes telas:
 <img src="https://git.rnp.br/gci/dev/testbed-blockchain/piloto-blockchain-v1/-/raw/main/docs/images/terminal-back.png?ref_type=heads" width="600" alt="Terminal em execução para o back-end">
 
 - Terminal em execução para o front-end
-![Texto Alternativo](docs/imagens/terminal-front.png)
+<img src="https://git.rnp.br/gci/dev/testbed-blockchain/piloto-blockchain-v1/-/raw/main/docs/images/terminal-front.png?ref_type=heads" width="600" alt="Terminal em execução para o front-end">
 
 
 Agora, você pode acessar a aplicação web no seu navegador através do seguinte endereço: [http://localhost:3000](http://localhost:3000).
@@ -75,7 +75,7 @@ sudo lsof -i :80
 
 Se a saída for semelhante à imagem abaixo, isso indica que a porta 80 está em uso por outro serviço:
 
-![Texto Alternativo](docs/imagens/terminal-port.png)
+<img src="https://git.rnp.br/gci/dev/testbed-blockchain/piloto-blockchain-v1/-/raw/main/docs/images/terminal-port.png?ref_type=heads" width="600" alt="Listando serviços na porta 80">
 
 Nesse caso, você deve finalizar o serviço em execução usando o comando:
 
