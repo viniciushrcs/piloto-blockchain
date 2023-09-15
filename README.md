@@ -53,7 +53,7 @@ Antes de iniciar, certifique-se de ter os seguintes softwares instalados no seu 
 Se tudo ocorreu sem problemas, você deve ver as seguintes telas:
 
 - Terminal em execução para o back-end
-![Texto Alternativo](docs/imagens/terminal-back.png)
+<img src="https://git.rnp.br/gci/dev/testbed-blockchain/piloto-blockchain-v1/-/raw/main/docs/images/terminal-back.png?ref_type=heads" width="600" alt="Terminal em execução para o back-end">
 
 - Terminal em execução para o front-end
 ![Texto Alternativo](docs/imagens/terminal-front.png)
