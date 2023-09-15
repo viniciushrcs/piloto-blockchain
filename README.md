@@ -63,7 +63,7 @@ Agora, você pode acessar a aplicação web no seu navegador através do seguint
 
 ## Utilizando a Aplicação Web
 
-A criação de uma rede blockchain usando a aplicação web é intuitiva e pode ser vista no [https://git.rnp.br/gci/dev/testbed-blockchain/piloto-blockchain-v1/-/raw/main/docs/videos/clientv2.mp4?ref_type=heads](vídeo).
+A criação de uma rede blockchain usando a aplicação web é intuitiva e pode ser vista no [vídeo](https://git.rnp.br/gci/dev/testbed-blockchain/piloto-blockchain-v1/-/raw/main/docs/videos/clientv2.mp4?ref_type=heads).
 
 ## Possíveis Problemas
 
