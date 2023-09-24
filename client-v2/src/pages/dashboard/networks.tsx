@@ -193,6 +193,11 @@ export default function Networks() {
       const formData = new FormData();
 
       formData.append('file', values.file);
+      formData.append('ordererOrganization', ordererOrganization);
+      formData.append('peerOrganizations', JSON.stringify(peerOrganizations));
+      formData.append('channelName', values.channel);
+      formData.append('chaincodeName', values.params);
+      formData.append('chaincodePath', 'chaincode-typescript');
 
       const response = await FabricNetworkApiInstance.uploadChaincode(formData);
 
