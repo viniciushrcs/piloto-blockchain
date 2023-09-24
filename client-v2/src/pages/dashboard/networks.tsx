@@ -15,7 +15,8 @@ import {
   TextInput,
   Tooltip,
   MultiSelect,
-  Select
+  Select,
+  FileInput
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useNetworkStore } from '@/stores/network';
@@ -92,6 +93,7 @@ type OptionProps = {
 type ChainCode = {
   params: string;
   channel: string;
+  file: File | undefined;
 };
 
 export default function Networks() {
@@ -130,7 +132,8 @@ export default function Networks() {
   const chainCodeForm = useForm<ChainCode>({
     initialValues: {
       params: '',
-      channel: ''
+      channel: '',
+      file: undefined
     },
     validate: {
       params: hasLength({ min: 3 }, 'Você precisa informar os parâmetros'),
@@ -513,9 +516,8 @@ export default function Networks() {
             <Select
               disabled={loading}
               data={[
-                { label: 'Asset Transfer', value: 'asset-transfer' },
-                { label: 'Logistics', value: 'logistics' },
-                { label: 'Energy Trade', value: 'energy-trade' }
+                { label: 'Asset Transfer', value: 'asset-transfer-basic' },
+                { label: 'Custom', value: 'custom' }
               ]}
               searchable
               placeholder="Parâmetros"
@@ -523,6 +525,16 @@ export default function Networks() {
               classNames={classes}
               {...chainCodeForm.getInputProps('params')}
             />
+            {chainCodeForm.getInputProps('params').value === 'custom' && (
+              <FileInput
+                label="Selecione o arquivo (tar.gz)"
+                placeholder="Selecione o arquivo"
+                classNames={classes}
+                accept=".tar.gz"
+                multiple={false}
+                {...chainCodeForm.getInputProps('file')}
+              />
+            )}
             <div className="space-x-2">
               <Button
                 type="submit"
