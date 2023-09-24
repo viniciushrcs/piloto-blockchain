@@ -189,17 +189,27 @@ export default function Networks() {
 
     const peerOrganizations = getPeerOrganizations();
 
-    const payload: DeployChaincodePayload = {
-      ordererOrganization,
-      peerOrganizations,
-      channelName: values.channel,
-      chaincodeName: values.params,
-      chaincodePath: 'chaincode-typescript'
-    };
+    if (values.params === 'custom' && values.file) {
+      const formData = new FormData();
 
-    const response = await FabricNetworkApiInstance.deployChaincode(payload);
+      formData.append('file', values.file);
 
-    console.log(response);
+      const response = await FabricNetworkApiInstance.uploadChaincode(formData);
+
+      console.log(response);
+    } else {
+      const payload: DeployChaincodePayload = {
+        ordererOrganization,
+        peerOrganizations,
+        channelName: values.channel,
+        chaincodeName: values.params,
+        chaincodePath: 'chaincode-typescript'
+      };
+
+      const response = await FabricNetworkApiInstance.deployChaincode(payload);
+
+      console.log(response);
+    }
   };
 
   const onSubmitChannel = async (values: Channel) => {
@@ -516,7 +526,10 @@ export default function Networks() {
             <Select
               disabled={loading}
               data={[
-                { label: 'Asset Transfer', value: 'asset-transfer-basic' },
+                {
+                  label: 'Asset Transfer (default)',
+                  value: 'asset-transfer-basic'
+                },
                 { label: 'Custom', value: 'custom' }
               ]}
               searchable

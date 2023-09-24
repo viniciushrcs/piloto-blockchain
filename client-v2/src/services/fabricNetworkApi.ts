@@ -10,6 +10,15 @@ const api = axios.create({
 });
 
 class FabricNetworkApi {
+  async uploadChaincode(formData: FormData) {
+    try {
+      return await api.post('/upload-chaincode', formData);
+    } catch (error) {
+      console.error('Erro ao fazer upload do chaincode:', error);
+      throw error;
+    }
+  }
+
   async startNetwork(payload: StartNetworkPayload) {
     try {
       return await api.post('/start-network', payload);
