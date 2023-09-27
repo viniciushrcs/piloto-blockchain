@@ -199,7 +199,15 @@ export default function Networks() {
       formData.append('chaincodeName', values.params);
       formData.append('chaincodePath', 'chaincode-typescript');
 
-      const response = await FabricNetworkApiInstance.uploadChaincode(formData);
+      // const response = await api.post('/deploy-chaincode', formData, {
+      //   headers: {
+      //     'Content-Type': 'multipart/form-data'
+      //   }
+      // });
+
+      const response = await FabricNetworkApiInstance.deployChaincode(
+        formData as any
+      );
 
       console.log(response);
     } else {
