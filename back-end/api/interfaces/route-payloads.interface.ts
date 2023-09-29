@@ -24,7 +24,6 @@ export interface DeployChaincodePayload
   extends CreateChannelPayload,
     StartNetworkPayload {
   chaincodeName: string;
-  chaincodePath: string;
 }
 
 export interface ExecuteChaincodePayload

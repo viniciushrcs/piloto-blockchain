@@ -51,13 +51,8 @@ export async function createChannel(specs, isDefault = false) {
 }
 
 export async function chaincodeDeploy(specs, selectedOrganization = null) {
-  const {
-    channelName,
-    ordererOrganization,
-    peerOrganizations,
-    chaincodeName,
-    chaincodePath,
-  } = specs;
+  const { channelName, ordererOrganization, peerOrganizations, chaincodeName } =
+    specs;
 
   let orgsToDeploy = peerOrganizations;
 
@@ -79,7 +74,7 @@ export async function chaincodeDeploy(specs, selectedOrganization = null) {
       `Deploying chaincode for org ${peerOrg} and ${peerOrgsInfo[i]}`
     );
     await executeCommand([
-      `../network chaincode deploy ${channelName} ${chaincodeName} ${chaincodePath} ${chaincodeCommited} ${ordererOrganization} ${peerOrg} ${peerOrgsInfo[i]}`,
+      `../network chaincode deploy ${channelName} ${chaincodeName} ${chaincodeName} ${chaincodeCommited} ${ordererOrganization} ${peerOrg} ${peerOrgsInfo[i]}`,
     ]);
     chaincodeCommited = true;
     i++;

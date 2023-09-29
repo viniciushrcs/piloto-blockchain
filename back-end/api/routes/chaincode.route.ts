@@ -1,3 +1,4 @@
+import { ChaincodeCommandArgs } from './../../../client/src/interfaces/fabricNetworkApiPayloads';
 import express from 'express';
 import multer from 'multer';
 import path, { resolve } from 'path';
@@ -36,15 +37,13 @@ router.post('/deploy-chaincode', upload.single('file'), async (req, res) => {
   const destinationDir = path.join(__dirname, '../../chaincodes');
 
   try {
-    let chaincodePath;
     if (req.file) {
       await tar.x({
         file: req.file.path,
         cwd: destinationDir,
       });
-      chaincodePath = resolve(destinationDir, specs.chaincodeName);
     } else {
-      chaincodePath = path.join(destinationDir, specs.chaincodeName);
+      const chaincodePath = path.join(destinationDir, specs.chaincodeName);
       if (!fs.existsSync(chaincodePath)) {
         res
           .status(400)
@@ -52,7 +51,6 @@ router.post('/deploy-chaincode', upload.single('file'), async (req, res) => {
         return;
       }
     }
-    specs.chaincodePath = chaincodePath;
     await chaincodeDeploy(specs);
     res.status(200).send(`O chaincode ${specs.chaincodeName} foi deployado`);
   } catch (e) {
