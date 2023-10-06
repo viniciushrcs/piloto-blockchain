@@ -200,7 +200,7 @@ function create_channel_MSP() {
   ORD_ORG=$1
   shift
   PEER_ORGS=("$@")
-
+  
   push_fn "Creating channel MSP"
 
   create_channel_org_MSP $ORD_ORG orderer $ORG0_NS
