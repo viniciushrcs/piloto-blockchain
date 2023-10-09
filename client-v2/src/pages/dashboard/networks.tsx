@@ -25,10 +25,7 @@ import { hasLength, useForm } from '@mantine/form';
 import { IconInfoCircle, IconSquareX, IconTextPlus } from '@tabler/icons-react';
 import { Channel } from '@/types/channel';
 import { applyNamingPattern } from '@/utils/applyNamingPattern';
-import {
-  CreateChannelPayload,
-  DeployChaincodePayload
-} from '@/interfaces/fabricNetworkApiPayloads';
+import { CreateChannelPayload } from '@/interfaces/fabricNetworkApiPayloads';
 import FabricNetworkApiInstance from '@/services/fabricNetworkApi';
 import { convertParticipants } from '@/utils/convertParticipants';
 import { StatusCodes } from 'http-status-codes';
@@ -101,7 +98,12 @@ export default function Networks() {
 
   const [opened, { open, close }] = useDisclosure(false);
 
-  const { networks: nets, getNetwork, setChannel } = useNetworkStore();
+  const {
+    networks: nets,
+    getNetwork,
+    setChannel,
+    setChaincode
+  } = useNetworkStore();
 
   const [network, setNetwork] = useState<Network | undefined>(undefined);
 
@@ -112,6 +114,8 @@ export default function Networks() {
   const [createChainCode, setCreateChainCode] = useState(false);
 
   const [loading, setLoading] = useState(false);
+
+  const [chainCodeLoading, setChainCodeLoading] = useState(false);
 
   const [optionPropsOrgs, setOptionPropsOrgs] = useState<OptionProps[]>([]);
 
@@ -181,6 +185,8 @@ export default function Networks() {
   };
 
   const onSubmitChainCode = async (values: ChainCode) => {
+    setChainCodeLoading(true);
+
     // TODO: Criar método para obter organização que possui nó ordenador
     const ordererOrganization =
       network?.organizations?.find(
@@ -188,6 +194,8 @@ export default function Networks() {
       )?.name || '';
 
     const peerOrganizations = getPeerOrganizations();
+
+    let status = StatusCodes.OK;
 
     if (values.params === 'custom' && values.file) {
       const formData = new FormData();
@@ -198,29 +206,58 @@ export default function Networks() {
       formData.append('channelName', values.channel);
       formData.append('chaincodeName', 'chaincode-typescript');
 
-      // const response = await api.post('/deploy-chaincode', formData, {
-      //   headers: {
-      //     'Content-Type': 'multipart/form-data'
-      //   }
-      // });
+      const response = await FabricNetworkApiInstance.deployChaincode(
+        formData as any
+      );
+
+      status = response.status;
+    } else {
+      const formData = new FormData();
+
+      formData.append('ordererOrganization', ordererOrganization);
+      formData.append('peerOrganizations', JSON.stringify(peerOrganizations));
+      formData.append('channelName', values.channel);
+      formData.append('chaincodeName', values.params);
 
       const response = await FabricNetworkApiInstance.deployChaincode(
         formData as any
       );
 
-      console.log(response);
-    } else {
-      const payload: DeployChaincodePayload = {
-        ordererOrganization,
-        peerOrganizations,
-        channelName: values.channel,
-        chaincodeName: values.params
-      };
-
-      const response = await FabricNetworkApiInstance.deployChaincode(payload);
-
-      console.log(response);
+      status = response.status;
     }
+
+    if (status === StatusCodes.OK) {
+      const networkId = network?.id as number;
+
+      setChaincode(networkId, {
+        name: values.params,
+        channelName: values.channel
+      });
+
+      handleCancelChainCodeCreating();
+
+      const updateNetwork = getNetwork(networkId);
+
+      setNetwork(updateNetwork);
+
+      notifications.show({
+        title: 'Canal criado com sucesso!',
+        message: `O chaincode foi implantado com sucesso`,
+        color: 'green',
+        icon: <IconTextPlus size={20} />,
+        autoClose: 5000
+      });
+    } else {
+      notifications.show({
+        title: 'Erro ao criar canal!',
+        message: `Ocorreu um erro implantar o chaincode`,
+        color: 'red',
+        icon: <IconSquareX size={20} />,
+        autoClose: 5000
+      });
+    }
+
+    setChainCodeLoading(false);
   };
 
   const onSubmitChannel = async (values: Channel) => {
@@ -512,6 +549,34 @@ export default function Networks() {
           <Text fz="xs" c="dimmed" mt={3} mb="xl">
             Gerencie os chaincodes da rede
           </Text>
+          {network?.chainCodes && (
+            <Card className={classes.card} withBorder mb={'xs'}>
+              {network?.chainCodes?.map((chainCode) => (
+                <>
+                  <Group
+                    key={Math.random()}
+                    position="apart"
+                    className={classes.item}
+                    noWrap
+                    spacing="xl"
+                  >
+                    <div>
+                      <Text size="xs" color="dimmed">
+                        Nome do chaincode
+                      </Text>
+                      <Text>{chainCode?.name}</Text>
+                    </div>
+                    <div>
+                      <Text size="xs" color="dimmed" ta="end">
+                        Canal
+                      </Text>
+                      <Text>{chainCode?.channelName}</Text>
+                    </div>
+                  </Group>
+                </>
+              ))}
+            </Card>
+          )}
           <Box
             hidden={!createChainCode}
             p="md"
@@ -526,7 +591,7 @@ export default function Networks() {
           >
             <Title order={6}>Definição de um novo chaincode</Title>
             <Select
-              disabled={loading}
+              disabled={chainCodeLoading}
               data={optionPropsChannels}
               searchable
               placeholder="Selecione um canal"
@@ -535,7 +600,7 @@ export default function Networks() {
               {...chainCodeForm.getInputProps('channel')}
             />
             <Select
-              disabled={loading}
+              disabled={chainCodeLoading}
               data={[
                 {
                   label: 'Asset Transfer (default)',
@@ -556,6 +621,7 @@ export default function Networks() {
                 classNames={classes}
                 accept=".tar.gz"
                 multiple={false}
+                disabled={chainCodeLoading}
                 {...chainCodeForm.getInputProps('file')}
               />
             )}
@@ -563,7 +629,7 @@ export default function Networks() {
               <Button
                 type="submit"
                 leftIcon={<IconTextPlus size={20} />}
-                loading={loading}
+                loading={chainCodeLoading}
               >
                 Implantar
               </Button>
@@ -572,7 +638,7 @@ export default function Networks() {
                 variant="default"
                 leftIcon={<IconSquareX size={20} />}
                 onClick={handleCancelChainCodeCreating}
-                disabled={loading}
+                disabled={chainCodeLoading}
               >
                 Cancelar
               </Button>

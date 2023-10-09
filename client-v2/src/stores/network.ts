@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { PeerOrganization } from '@/interfaces/fabricNetworkApiPayloads';
+import { ChainCode } from '@/types/chainCode';
 import { Channel } from '@/types/channel';
 import { Network } from '@/types/network';
 import { OrgFormData } from '@/types/orgFormData';
@@ -15,6 +16,7 @@ type State = {
     channelName: string,
     organizations: string[]
   ) => void;
+  setChaincode: (networkId: number, chainCode: ChainCode) => void;
   getOrganizations: (networkId: number) => OrgFormData[] | undefined;
   getChannels: (networkId: number) => Channel[] | undefined;
 };
@@ -44,6 +46,21 @@ export const useNetworkStore = create<State>()(
             return {
               ...network,
               channels: [...(network.channels || []), channel] // Add the new channel
+            };
+          }
+          return network;
+        });
+
+        set(() => ({ networks: updatedNetworks }));
+      },
+      setChaincode: (networkId, chainCode) => {
+        const { networks } = get();
+
+        const updatedNetworks = networks.map((network) => {
+          if (network.id === networkId) {
+            return {
+              ...network,
+              chainCodes: [...(network.chainCodes || []), chainCode] // Add the new chaincode
             };
           }
           return network;
