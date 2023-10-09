@@ -196,8 +196,7 @@ export default function Networks() {
       formData.append('ordererOrganization', ordererOrganization);
       formData.append('peerOrganizations', JSON.stringify(peerOrganizations));
       formData.append('channelName', values.channel);
-      formData.append('chaincodeName', values.params);
-      formData.append('chaincodePath', 'chaincode-typescript');
+      formData.append('chaincodeName', 'chaincode-typescript');
 
       // const response = await api.post('/deploy-chaincode', formData, {
       //   headers: {
@@ -215,8 +214,7 @@ export default function Networks() {
         ordererOrganization,
         peerOrganizations,
         channelName: values.channel,
-        chaincodeName: values.params,
-        chaincodePath: 'chaincode-typescript'
+        chaincodeName: values.params
       };
 
       const response = await FabricNetworkApiInstance.deployChaincode(payload);
