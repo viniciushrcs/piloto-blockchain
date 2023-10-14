@@ -28,23 +28,23 @@ Organizations:
     OrdererEndpoints:
       - <%= ordererOrg %>-orderer1.${ORG0_NS}.svc.cluster.local:6050
 <% for (let i = 0; i < peerOrgs.length; i++) { %>
-  - &Org<%= i %>
-    Name: Org<%= i %>MSP
-    ID: Org<%= i %>MSP
+  - &<%= peerOrgs[i].charAt(0).toUpperCase() + peerOrgs[i].slice(1)%>
+    Name: <%= peerOrgs[i].charAt(0).toUpperCase() + peerOrgs[i].slice(1)%>MSP
+    ID: <%= peerOrgs[i].charAt(0).toUpperCase() + peerOrgs[i].slice(1)%>MSP
     MSPDir: ./channel-msp/peerOrganizations/<%= peerOrgs[i] %>/msp
     Policies:
       Readers:
         Type: Signature
-        Rule: "OR('Org<%= i %>MSP.member')"
+        Rule: "OR('<%= peerOrgs[i].charAt(0).toUpperCase() + peerOrgs[i].slice(1)%>MSP.member')"
       Writers:
         Type: Signature
-        Rule: "OR('Org<%= i %>MSP.member')"
+        Rule: "OR('<%= peerOrgs[i].charAt(0).toUpperCase() + peerOrgs[i].slice(1)%>MSP.member')"
       Admins:
         Type: Signature
-        Rule: "OR('Org<%= i %>MSP.member')"
+        Rule: "OR('<%= peerOrgs[i].charAt(0).toUpperCase() + peerOrgs[i].slice(1)%>MSP.member')"
       Endorsement:
         Type: Signature
-        Rule: "OR('Org<%= i %>MSP.member')"
+        Rule: "OR('<%= peerOrgs[i].charAt(0).toUpperCase() + peerOrgs[i].slice(1)%>MSP.member')"
 
     AnchorPeers:
       - Host: <%= peerOrgs[i] %>-peer1.${ORG1_NS}.svc.cluster.local
@@ -141,5 +141,5 @@ Profiles:
     Application:
       <<: *ApplicationDefaults
       Organizations:<% for (let i = 0; i < peerOrgs.length; i++) { %>
-        - *Org<%= i %><% } %>
+        - *<%= peerOrgs[i].charAt(0).toUpperCase() + peerOrgs[i].slice(1)%><% } %>
       Capabilities: *ApplicationCapabilities
