@@ -469,7 +469,7 @@ export default function Networks() {
               withAsterisk
               mb="md"
               label="Nome do canal"
-              placeholder="Ex.: channel-name (sem espaços, caracteres especiais ou acentos...)"
+              placeholder="Ex.: channelname (sem espaços, caracteres especiais ou números)"
               classNames={classes}
               disabled={loading}
               rightSection={
