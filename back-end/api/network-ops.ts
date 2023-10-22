@@ -105,10 +105,14 @@ export async function chaincodeQuery(specs, selectedOrganization = null) {
     ]);
   } else {
     const peerOrgsArgs = specs.peerOrganizations.map((org) => `${org.name}`);
+    const ret = [];
     for (const peerOrg of peerOrgsArgs) {
-      await executeCommand([
+      const response = await executeCommand([
         `../network chaincode query ${channelName} ${chaincodeName} '${chaincodeQueryCommandParsed}' ${ordererOrganization} ${peerOrg}`,
       ]);
+      console.log(response);
+      ret.push(response);
     }
+    return ret;
   }
 }

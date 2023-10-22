@@ -61,18 +61,15 @@ router.post('/deploy-chaincode', upload.single('file'), async (req, res) => {
 
 router.post('/execute-chaincode', async (req, res) => {
   const specs: ExecuteChaincodePayload = req.body;
+  let response;
   try {
     if (specs.chaincodeCommand?.init) {
-      await chaincodeInvoke(specs);
+      response = await chaincodeInvoke(specs);
     }
     if (specs.chaincodeCommand?.query) {
-      await chaincodeQuery(specs);
+      response = await chaincodeQuery(specs);
     }
-    res
-      .status(202)
-      .send(
-        `Sua solicitação para executar o chaincode ${specs.chaincodeName} com os comandos ${specs.chaincodeCommand} foi recebida`
-      );
+    res.status(202).json(response);
   } catch (e) {
     console.log(e);
     res.status(500).send(`Ocorreu um erro ao executar o chaincode`);
