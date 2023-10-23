@@ -43,10 +43,10 @@ function init_storage_volumes() {
     exit 1
   fi
 
-  cat kube/pvc-fabric-$ORD_ORG.yaml | envsubst | kubectl -n $ORG0_NS create -f - || true
+  cat kube/$NETWORK_NAME/pvc-fabric-$ORD_ORG.yaml | envsubst | kubectl -n $ORG0_NS create -f - || true
 
   for PEER_ORG in "${PEER_ORGS[@]}"; do
-    cat kube/pvc-fabric-$PEER_ORG.yaml | envsubst | kubectl -n $ORG1_NS create -f - || true
+    cat kube/$NETWORK_NAME/pvc-fabric-$PEER_ORG.yaml | envsubst | kubectl -n $ORG1_NS create -f - || true
   done
 
   pop_fn
@@ -58,6 +58,7 @@ function load_org_config() {
   PEER_ORGS=("$@")
   
   push_fn "Creating fabric config maps"
+  log $ORG0_NS $NETWORK_NAME
 
   kubectl -n $ORG0_NS delete configmap $ORD_ORG-orderer-config || true
 
@@ -65,10 +66,10 @@ function load_org_config() {
     kubectl -n $ORG1_NS delete configmap $PEER_ORG-config || true
   done
 
-  kubectl -n $ORG0_NS create configmap $ORD_ORG-orderer-config --from-file=config/$ORD_ORG
+  kubectl -n $ORG0_NS create configmap $ORD_ORG-orderer-config --from-file=config/$NETWORK_NAME/$ORD_ORG
 
   for PEER_ORG in "${PEER_ORGS[@]}"; do
-    kubectl -n $ORG1_NS create configmap $PEER_ORG-config --from-file=config/$PEER_ORG
+    kubectl -n $ORG1_NS create configmap $PEER_ORG-config --from-file=config/$NETWORK_NAME/$PEER_ORG
   done
 
   pop_fn
@@ -86,9 +87,9 @@ function apply_k8s_builder_roles() {
 function apply_k8s_builders() {
   push_fn "Installing k8s chaincode builders"
 
-  apply_template kube/$1/$1-install-k8s-builder.yaml $ORG1_NS
+  apply_template kube/$NETWORK_NAME/$1/$1-install-k8s-builder.yaml $NETWORK_NAME
 
-  kubectl -n $ORG1_NS wait --for=condition=complete --timeout=60s job/$1-install-k8s-builder
+  kubectl -n $NETWORK_NAME wait --for=condition=complete --timeout=60s job/$1-install-k8s-builder
 
   pop_fn
 }

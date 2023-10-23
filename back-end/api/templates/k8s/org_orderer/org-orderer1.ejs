@@ -9,7 +9,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: <%= ordererOrg %>-orderer1-tls-cert
-  namespace: ${ORG0_NS}
+  namespace: ${NETWORK_NAME}
 spec:
   isCA: false
   privateKey:
@@ -18,7 +18,7 @@ spec:
   dnsNames:
     - localhost
     - <%= ordererOrg %>-orderer1
-    - <%= ordererOrg %>-orderer1.${ORG0_NS}.svc.cluster.local
+    - <%= ordererOrg %>-orderer1.${NETWORK_NAME}.svc.cluster.local
     - <%= ordererOrg %>-orderer1.${DOMAIN}
     - <%= ordererOrg %>-orderer1-admin.${DOMAIN}
   ipAddresses:

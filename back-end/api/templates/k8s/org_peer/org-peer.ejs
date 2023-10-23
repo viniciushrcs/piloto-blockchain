@@ -8,7 +8,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: <%= peerOrg %>-<%= peerNumber %>-tls-cert
-  namespace: ${ORG1_NS}
+  namespace: ${NETWORK_NAME}
 spec:
   isCA: false
   privateKey:
@@ -17,7 +17,7 @@ spec:
   dnsNames:
     - localhost
     - <%= peerOrg %>-<%= peerNumber %>
-    - <%= peerOrg %>-<%= peerNumber %>.${ORG1_NS}.svc.cluster.local
+    - <%= peerOrg %>-<%= peerNumber %>.${NETWORK_NAME}.svc.cluster.local
     - <%= peerOrg %>-<%= peerNumber %>.${DOMAIN}
     - <%= peerOrg %>-peer-gateway-svc
     - <%= peerOrg %>-peer-gateway-svc.${DOMAIN}
@@ -45,7 +45,7 @@ data:
   CORE_PEER_CHAINCODEADDRESS: <%= peerOrg %>-<%= peerNumber %>:7052
   CORE_PEER_CHAINCODELISTENADDRESS: 0.0.0.0:7052
   CORE_PEER_GOSSIP_BOOTSTRAP: <%= peerOrg %>-<%= peerNumber %>:7051
-  CORE_PEER_GOSSIP_EXTERNALENDPOINT: <%= peerOrg %>-<%= peerNumber %>.${ORG1_NS}.svc.cluster.local:7051
+  CORE_PEER_GOSSIP_EXTERNALENDPOINT: <%= peerOrg %>-<%= peerNumber %>.${NETWORK_NAME}.svc.cluster.local:7051
   CORE_PEER_LOCALMSPID: <%= peerOrg.charAt(0).toUpperCase() + peerOrg.slice(1) %>MSP
   CORE_PEER_MSPCONFIGPATH: /var/hyperledger/fabric/organizations/peerOrganizations/<%= peerOrg %>.example.com/peers/<%= peerOrg %>-<%= peerNumber %>.<%= peerOrg %>.example.com/msp
   CORE_OPERATIONS_LISTENADDRESS: 0.0.0.0:9443

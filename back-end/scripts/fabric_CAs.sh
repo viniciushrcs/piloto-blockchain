@@ -11,14 +11,14 @@ function launch_ECert_CAs() {
   shift
   PEER_ORGS=("$@")
 
-  apply_template kube/$ORD_ORG/$ORD_ORG-ca.yaml $ORG0_NS
+  apply_template kube/$NETWORK_NAME/$ORD_ORG/$ORD_ORG-ca.yaml $NETWORK_NAME
 
   for PEER_ORG in "${PEER_ORGS[@]}"; do
-    apply_template kube/$PEER_ORG/$PEER_ORG-ca.yaml $ORG1_NS
-    kubectl -n $ORG1_NS rollout status deploy/$PEER_ORG-ca
+    apply_template kube/$NETWORK_NAME/$PEER_ORG/$PEER_ORG-ca.yaml $NETWORK_NAME
+    kubectl -n $NETWORK_NAME rollout status deploy/$PEER_ORG-ca
   done
 
-  kubectl -n $ORG0_NS rollout status deploy/$ORD_ORG-ca
+  kubectl -n $NETWORK_NAME rollout status deploy/$ORD_ORG-ca
 
   # todo: this papers over a nasty bug whereby the CAs are ready, but sporadically refuse connections after a down / up
   sleep 5
@@ -35,20 +35,20 @@ function init_tls_cert_issuers() {
 
   # Create a self-signing certificate issuer / root TLS certificate for the blockchain.
   # TODO : Bring-Your-Own-Key - allow the network bootstrap to read an optional ECDSA key pair for the TLS trust root CA.
-  kubectl -n $ORG0_NS apply -f kube/root-tls-cert-issuer.yaml
-  kubectl -n $ORG0_NS wait --timeout=30s --for=condition=Ready issuer/root-tls-cert-issuer
+  kubectl -n $NETWORK_NAME apply -f kube/root-tls-cert-issuer.yaml
+  kubectl -n $NETWORK_NAME wait --timeout=30s --for=condition=Ready issuer/root-tls-cert-issuer
 
   for PEER_ORG in "${PEER_ORGS[@]}"; do
-    kubectl -n $ORG1_NS apply -f kube/root-tls-cert-issuer.yaml
-    kubectl -n $ORG1_NS wait --timeout=30s --for=condition=Ready issuer/root-tls-cert-issuer
+    kubectl -n $NETWORK_NAME apply -f kube/root-tls-cert-issuer.yaml
+    kubectl -n $NETWORK_NAME wait --timeout=30s --for=condition=Ready issuer/root-tls-cert-issuer
 
     # Use the self-signing issuer to generate an Issuer for each org.
-    kubectl -n $ORG1_NS apply -f kube/$PEER_ORG/$PEER_ORG-tls-cert-issuer.yaml
-    kubectl -n $ORG1_NS wait --timeout=30s --for=condition=Ready issuer/$PEER_ORG-tls-cert-issuer
+    kubectl -n $NETWORK_NAME apply -f kube/$NETWORK_NAME/$PEER_ORG/$PEER_ORG-tls-cert-issuer.yaml
+    kubectl -n $NETWORK_NAME wait --timeout=30s --for=condition=Ready issuer/$PEER_ORG-tls-cert-issuer
   done
 
-  kubectl -n $ORG0_NS apply -f kube/$ORD_ORG/$ORD_ORG-tls-cert-issuer.yaml
-  kubectl -n $ORG0_NS wait --timeout=30s --for=condition=Ready issuer/$ORD_ORG-tls-cert-issuer
+  kubectl -n $NETWORK_NAME apply -f kube/$NETWORK_NAME/$ORD_ORG/$ORD_ORG-tls-cert-issuer.yaml
+  kubectl -n $NETWORK_NAME wait --timeout=30s --for=condition=Ready issuer/$ORD_ORG-tls-cert-issuer
 
   pop_fn
 }
@@ -83,10 +83,10 @@ function enroll_bootstrap_ECert_CA_users() {
 
   push_fn "Enrolling bootstrap ECert CA users"
 
-  enroll_bootstrap_ECert_CA_user $ORD_ORG $ORG0_NS
+  enroll_bootstrap_ECert_CA_user $ORD_ORG $NETWORK_NAME
 
   for PEER_ORG in "${PEER_ORGS[@]}"; do
-    enroll_bootstrap_ECert_CA_user $PEER_ORG $ORG1_NS
+    enroll_bootstrap_ECert_CA_user $PEER_ORG $NETWORK_NAME
   done
 
   pop_fn

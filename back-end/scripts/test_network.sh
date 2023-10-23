@@ -8,9 +8,9 @@
 function launch_orderers() {
   push_fn "Launching orderers"
 
-  apply_template kube/$1/$1-orderer1.yaml $ORG0_NS
+  apply_template kube/${NETWORK_NAME}/$1/$1-orderer1.yaml $NETWORK_NAME
 
-  kubectl -n $ORG0_NS rollout status deploy/$1-orderer1
+  kubectl -n $NETWORK_NAME rollout status deploy/$1-orderer1
 
   pop_fn
 }
@@ -25,8 +25,8 @@ function launch_peers() {
     local PEER_ORG="${PEER_ORG_ARRAY[0]}"
     IFS=',' read -ra PEERS <<< "${PEER_ORG_ARRAY[1]}"
     for PEER in "${PEERS[@]}"; do
-      apply_template kube/$PEER_ORG/$PEER_ORG-$PEER.yaml $ORG1_NS
-      kubectl -n $ORG1_NS rollout status deploy/$PEER_ORG-$PEER
+      apply_template kube/${NETWORK_NAME}/$PEER_ORG/$PEER_ORG-$PEER.yaml $NETWORK_NAME
+      kubectl -n $NETWORK_NAME rollout status deploy/$PEER_ORG-$PEER
     done
   done
 
@@ -94,7 +94,7 @@ function create_orderer_local_MSP() {
   local orderer=$2
   local csr_hosts=${org}-${orderer}
 
-  create_node_local_MSP orderer $org $orderer $csr_hosts $ORG0_NS
+  create_node_local_MSP orderer $org $orderer $csr_hosts $NETWORK_NAME
 }
 
 function create_peer_local_MSP() {
@@ -119,7 +119,7 @@ function create_local_MSP() {
     local PEER_ORG="${PEER_ORG_ARRAY[0]}"
     IFS=',' read -ra PEERS <<< "${PEER_ORG_ARRAY[1]}"
     for PEER in "${PEERS[@]}"; do
-      create_peer_local_MSP $PEER_ORG $PEER $ORG1_NS
+      create_peer_local_MSP $PEER_ORG $PEER $NETWORK_NAME
     done
   done
 
@@ -140,6 +140,8 @@ function network_up() {
   done
 
   # Kube config
+  update_configmap $NETWORK_NAME
+  push_fn $NETWORK_NAME
   init_namespace
   init_storage_volumes $ORD_ORG "${PEER_ORGS[@]}"
   load_org_config $ORD_ORG "${PEER_ORGS[@]}"
@@ -168,7 +170,7 @@ function network_up() {
 
 function stop_services() {
   push_fn "Stopping Fabric services"
-  for ns in $ORG0_NS $ORG1_NS; do
+  for ns in $NETWORK_NAME $NETWORK_NAME; do
     kubectl -n $ns delete ingress --all
     kubectl -n $ns delete deployment --all
     kubectl -n $ns delete pod --all
@@ -203,7 +205,7 @@ function scrub_org_volumes() {
 function network_down() {
 
   set +e
-  for ns in $ORG0_NS $ORG1_NS; do
+  for ns in $NETWORK_NAME $NETWORK_NAME; do
     kubectl get namespace $ns > /dev/null
     if [[ $? -ne 0 ]]; then
       echo "No namespace $ns found - nothing to do."

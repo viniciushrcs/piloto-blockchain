@@ -203,11 +203,11 @@ function create_channel_MSP() {
   
   push_fn "Creating channel MSP"
 
-  create_channel_org_MSP $ORD_ORG orderer $ORG0_NS
+  create_channel_org_MSP $ORD_ORG orderer $NETWORK_NAME
 
   for PEER_ORG in "${PEER_ORGS[@]}"; do
     ORG_NS_VAR="${PEER_ORG^^}_NS"
-    create_channel_org_MSP $PEER_ORG peer $ORG1_NS
+    create_channel_org_MSP $PEER_ORG peer $NETWORK_NAME
   done
 
   extract_orderer_tls_cert $ORD_ORG orderer1
@@ -247,7 +247,7 @@ function create_channel_org_MSP() {
 function extract_orderer_tls_cert() {
   org=$1
   orderer=$2
-  ns=$ORG0_NS
+  ns=$NETWORK_NAME
 
   echo "Extracting TLS cert for $org $orderer"
 
@@ -261,7 +261,7 @@ function extract_orderer_tls_cert() {
 }
 
 function create_configtx() {
-  cat ${PWD}/config/$1/configtx-template.yaml | envsubst > ${TEMP_DIR}/configtx.yaml
+  cat ${PWD}/config/${NETWORK_NAME}/$1/configtx-template.yaml | envsubst > ${TEMP_DIR}/configtx.yaml
 }
 
 function create_genesis_block() {

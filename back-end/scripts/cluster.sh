@@ -61,7 +61,7 @@ function cluster_init() {
 
   wait_for_cert_manager
   wait_for_nginx_ingress
-  
+  create_configmap
   if [ "${STAGE_DOCKER_IMAGES}" == true ]; then
     pull_docker_images
     kind_load_docker_images
@@ -142,4 +142,36 @@ function load_images() {
   if [ "${CLUSTER_RUNTIME}" == "kind" ]; then
     kind_load_docker_images
   fi
+}
+
+function create_configmap() {
+  push_fn "Creating initial ConfigMap to track network names"
+
+  kubectl create configmap network-ids --from-literal=networks=""
+
+  pop_fn
+}
+
+function update_configmap() {
+  local network_id=$1
+
+  push_fn "Updating ConfigMap with network ID: $network_id"
+
+  local current_value=$(kubectl get configmap network-ids -o=jsonpath='{.data.networks}')
+
+  if [ -z "$current_value" ]; then
+    kubectl patch configmap network-ids -p "{\"data\":{\"networks\":\"$network_id\"}}"
+  else
+    kubectl patch configmap network-ids -p "{\"data\":{\"networks\":\"$current_value,$network_id\"}}"
+  fi
+
+  pop_fn
+}
+
+function get_configmap() {
+  push_fn "Fetching all network IDs from ConfigMap"
+
+  kubectl get configmap network-ids -o=jsonpath='{.data.networks}'
+
+  pop_fn
 }
