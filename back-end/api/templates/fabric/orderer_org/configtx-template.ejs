@@ -26,7 +26,7 @@ Organizations:
         Rule: "OR('OrdererMSP.member')"
 
     OrdererEndpoints:
-      - <%= ordererOrg %>-orderer1.${ORG0_NS}.svc.cluster.local:6050
+      - <%= ordererOrg %>-orderer1.${NETWORK_NAME}.svc.cluster.local:6050
 <% for (let i = 0; i < peerOrgs.length; i++) { %>
   - &<%= peerOrgs[i].charAt(0).toUpperCase() + peerOrgs[i].slice(1)%>
     Name: <%= peerOrgs[i].charAt(0).toUpperCase() + peerOrgs[i].slice(1)%>MSP
@@ -47,7 +47,7 @@ Organizations:
         Rule: "OR('<%= peerOrgs[i].charAt(0).toUpperCase() + peerOrgs[i].slice(1)%>MSP.member')"
 
     AnchorPeers:
-      - Host: <%= peerOrgs[i] %>-peer1.${ORG1_NS}.svc.cluster.local
+      - Host: <%= peerOrgs[i] %>-peer1.${NETWORK_NAME}.svc.cluster.local
         Port: 7051
 <% } %>
 Capabilities:
@@ -82,7 +82,7 @@ Application: &ApplicationDefaults
 Orderer: &OrdererDefaults
   # OrdererType: solo
   # Addresses:
-  #   - <%= ordererOrg %>-orderer1.${ORG0_NS}.svc.cluster.local:6050
+  #   - <%= ordererOrg %>-orderer1.${NETWORK_NAME}.svc.cluster.local:6050
   OrdererType: etcdraft
 
   EtcdRaft:

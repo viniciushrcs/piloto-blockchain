@@ -8,6 +8,8 @@ import {
   DestinationOrdFolders,
   DestinationPeerFolders,
 } from '../interfaces/folder-names.interface';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export const finalPeerFilesNames = (PEER_ORG, PEER_NUMBER): PeerFilesNames => ({
   'org-peer-tls-cert-issuer': `${PEER_ORG}-tls-cert-issuer.yaml`,
@@ -42,15 +44,15 @@ export const templateFolders = {
 };
 
 export const destinationOrdFolders = (ORD_ORG): DestinationOrdFolders => ({
-  dest_dir_config_orderer: `${__dirname}/../../config/${ORD_ORG}`,
-  dest_dir_orderer_org: `${__dirname}/../../kube/${ORD_ORG}`,
+  dest_dir_config_orderer: `${__dirname}/../../config/${process.env.NETWORK_NAME}/${ORD_ORG}`,
+  dest_dir_orderer_org: `${__dirname}/../../kube/${process.env.NETWORK_NAME}/${ORD_ORG}`,
 });
 
 export const destinationCommonFolder = (): DestinationCommonFolder => ({
-  dest_dir_pvc: `${__dirname}/../../kube`,
+  dest_dir_pvc: `${__dirname}/../../kube/${process.env.NETWORK_NAME}/`,
 });
 
 export const destinationPeerFolders = (PEER_ORG): DestinationPeerFolders => ({
-  dest_dir_config_peer: `${__dirname}/../../config/${PEER_ORG}`,
-  dest_dir_peer_org: `${__dirname}/../../kube/${PEER_ORG}`,
+  dest_dir_config_peer: `${__dirname}/../../config/${process.env.NETWORK_NAME}/${PEER_ORG}`,
+  dest_dir_peer_org: `${__dirname}/../../kube/${process.env.NETWORK_NAME}/${PEER_ORG}`,
 });

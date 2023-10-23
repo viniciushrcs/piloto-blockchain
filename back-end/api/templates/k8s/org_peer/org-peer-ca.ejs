@@ -16,7 +16,7 @@ spec:
   dnsNames:
     - localhost
     - <%= peerOrg %>-ca
-    - <%= peerOrg %>-ca.${ORG1_NS}.svc.cluster.local
+    - <%= peerOrg %>-ca.${NETWORK_NAME}.svc.cluster.local
     - <%= peerOrg %>-ca.${DOMAIN}
   ipAddresses:
     - 127.0.0.1

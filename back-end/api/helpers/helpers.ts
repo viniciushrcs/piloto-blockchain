@@ -1,5 +1,10 @@
 import fs from 'fs';
-import { exec } from 'child_process';
+import { spawn } from 'child_process';
+import { v4 as uuidv4 } from 'uuid';
+
+export function generateRandomId() {
+  return uuidv4();
+}
 
 export function logging_init() {
   const logStream = fs.createWriteStream('./src/network.log', { flags: 'w' });
@@ -49,20 +54,36 @@ export function print_help() {
   console.log(`Debug log file \t: ${process.env.DEBUG_FILE}`);
 }
 
-export async function executeCommand(commands: string[]): Promise<void> {
+export async function executeCommand(commands: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    exec(
-      commands.join(' && '),
-      { shell: '/bin/bash' },
-      (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Error executing function: ${error}`);
-          reject(error);
-        } else {
-          console.log(stdout, stderr);
-          resolve();
-        }
+    const output = [];
+    const command = commands.join(' && ');
+    const process = spawn(command, { shell: '/bin/bash' });
+
+    process.stdout.on('data', (data) => {
+      console.log(data.toString());
+      output.push(data.toString());
+    });
+
+    process.stderr.on('data', (data) => {
+      console.error(data.toString());
+      output.push(data.toString());
+    });
+
+    process.on('close', (code) => {
+      if (code === 0) {
+        resolve(output.join(''));
+      } else {
+        reject(
+          new Error(
+            `Process exited with code: ${code}, Output: ${output.join('')}`
+          )
+        );
       }
-    );
+    });
+
+    process.on('error', (error) => {
+      reject(error);
+    });
   });
 }
