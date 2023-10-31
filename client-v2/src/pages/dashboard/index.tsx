@@ -575,7 +575,10 @@ export default function Index() {
               onChange={(event) => {
                 const { value } = event.currentTarget;
 
-                step2Form.setFieldValue('name', applyNamingPattern(value));
+                step2Form.setFieldValue(
+                  'name',
+                  applyNamingPattern(value, 'withNumbers')
+                );
               }}
               value={step2Form.values.name}
               error={step2Form.errors.name}
