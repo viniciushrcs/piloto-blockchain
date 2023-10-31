@@ -19,9 +19,18 @@ class FabricNetworkApi {
     }
   }
 
-  async startNetwork(payload: StartNetworkPayload) {
+  async startCluster() {
     try {
-      return await api.post('/start-network', payload);
+      return await api.post('/start-cluster');
+    } catch (error) {
+      console.error('Erro ao iniciar a rede:', error);
+      throw error;
+    }
+  }
+
+  async createFabricNetwork(payload: StartNetworkPayload) {
+    try {
+      return await api.post('/create-fabric-network', payload);
     } catch (error) {
       console.error('Erro ao iniciar a rede:', error);
       throw error;

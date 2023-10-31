@@ -52,6 +52,7 @@ import { useNetworkStore } from '@/stores/network';
 import { applyNamingPattern } from '@/utils/applyNamingPattern';
 import { convertParticipants } from '@/utils/convertParticipants';
 import { getOrderingOrganization } from '@/utils/getOrderingOrganization';
+import { StatusCodes } from 'http-status-codes';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -279,7 +280,19 @@ export default function Index() {
       peerOrganizations: formattedParticipants
     };
 
-    await FabricNetworkApiInstance.startNetwork(payload);
+    const { data, status } = await FabricNetworkApiInstance.startCluster();
+
+    if (status === StatusCodes.ACCEPTED) {
+      notifications.show({
+        title: 'Iniciado criação da rede',
+        message: data,
+        color: 'green',
+        icon: <IconTextPlus size={20} />,
+        autoClose: 5000
+      });
+
+      await FabricNetworkApiInstance.createFabricNetwork(payload);
+    }
   };
 
   const handleReset = (step: number = STEP_PLATFORM_DEFINITION) => {
