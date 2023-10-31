@@ -51,6 +51,7 @@ import { OrgFormData } from '@/types/orgFormData';
 import { useNetworkStore } from '@/stores/network';
 import { applyNamingPattern } from '@/utils/applyNamingPattern';
 import { convertParticipants } from '@/utils/convertParticipants';
+import { getOrderingOrganization } from '@/utils/getOrderingOrganization';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -274,10 +275,7 @@ export default function Index() {
     const formattedParticipants = convertParticipants(participants);
 
     const payload: StartNetworkPayload = {
-      ordererOrganization:
-        participants.filter(
-          (participant) => participant.hasOrderingNode == 1
-        )[0]?.name || '',
+      ordererOrganization: getOrderingOrganization(participants),
       peerOrganizations: formattedParticipants
     };
 
