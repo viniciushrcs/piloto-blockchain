@@ -283,13 +283,15 @@ export default function Index() {
     const { data, status } = await FabricNetworkApiInstance.startCluster();
 
     if (status === StatusCodes.ACCEPTED) {
-      notifications.show({
-        title: 'Iniciado criação da rede',
-        message: data,
-        color: 'green',
-        icon: <IconTextPlus size={20} />,
-        autoClose: 5000
-      });
+      setTimeout(() => {
+        notifications.show({
+          title: 'Iniciado criação da rede',
+          message: data,
+          color: 'green',
+          icon: <IconTextPlus size={20} />,
+          autoClose: 5000
+        });
+      }, 5000);
 
       await FabricNetworkApiInstance.createFabricNetwork(payload);
     }
