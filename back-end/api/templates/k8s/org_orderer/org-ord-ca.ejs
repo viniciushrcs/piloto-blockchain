@@ -16,7 +16,7 @@ spec:
   dnsNames:
     - localhost
     - <%= ordererOrg %>-ca
-    - <%= ordererOrg %>-ca.${ORG0_NS}.svc.cluster.local
+    - <%= ordererOrg %>-ca.${NETWORK_NAME}.svc.cluster.local
     - <%= ordererOrg %>-ca.${DOMAIN}
   ipAddresses:
     - 127.0.0.1

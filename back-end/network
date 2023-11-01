@@ -37,7 +37,7 @@ context CONTAINER_NAMESPACE           ""                    # or "--namespace k8
 
 context FABRIC_CONTAINER_REGISTRY     hyperledger
 context FABRIC_PEER_IMAGE             ${FABRIC_CONTAINER_REGISTRY}/fabric-peer:${FABRIC_VERSION}
-context NETWORK_NAME                  test-network
+context NETWORK_NAME                  ${NETWORK_NAME:-test-network}
 context CLUSTER_NAME                  kind
 context KUBE_NAMESPACE                ${NETWORK_NAME}
 context NS                            ${KUBE_NAMESPACE}
@@ -47,7 +47,7 @@ context ORG2_NS                       ${NS}
 context DOMAIN                        localho.st
 context CHANNEL_NAME                  mychannel
 context ORDERER_TIMEOUT               10s                   # see https://github.com/hyperledger/fabric/issues/3372
-context TEMP_DIR                      ${PWD}/build
+context TEMP_DIR                      ${PWD}/build/${NETWORK_NAME}
 context CHAINCODE_BUILDER             ccaas                 # see https://github.com/hyperledgendary/fabric-builder-k8s/blob/main/docs/TEST_NETWORK_K8S.md
 context K8S_CHAINCODE_BUILDER_IMAGE   ghcr.io/hyperledger-labs/k8s-fabric-peer
 context K8S_CHAINCODE_BUILDER_VERSION v0.7.2

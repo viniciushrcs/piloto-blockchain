@@ -7,11 +7,9 @@ export const taskStatus = {
   message: '',
 };
 
-export async function processNetwork(specs: StartNetworkPayload) {
+export async function processNetwork() {
   try {
     taskStatus.inProgress = true;
-    taskStatus.message = 'Gerando artefatos';
-    await generateArtifacts(specs.ordererOrganization, specs.peerOrganizations);
 
     taskStatus.message = 'Iniciando o KIND';
     await kind();
@@ -20,9 +18,6 @@ export async function processNetwork(specs: StartNetworkPayload) {
     taskStatus.message = 'Iniciando o cluster';
     await cluster();
     console.log('\n');
-
-    taskStatus.message = 'Configurando a rede';
-    await up(specs);
     taskStatus.message = '';
   } catch (err) {
     console.error('Erro ao processar a rede:', err);

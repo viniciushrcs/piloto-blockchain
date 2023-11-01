@@ -155,6 +155,7 @@ export default function Networks() {
 
   const handleCancelChannelCreating = () => {
     setCreateChannel(false);
+    setLoading(false);
 
     channelForm.reset();
   };
@@ -169,10 +170,8 @@ export default function Networks() {
     if (organizations?.length) {
       const orgs = organizations
         .map(
-          (organizationId) =>
-            network?.organizations?.find(
-              (org) => org.id?.toString() === organizationId
-            )
+          (name) =>
+            network?.organizations?.find((org) => org.name?.toString() === name)
         )
         .filter((organization) => organization) as OrgFormData[];
 
@@ -470,7 +469,7 @@ export default function Networks() {
               withAsterisk
               mb="md"
               label="Nome do canal"
-              placeholder="Ex.: channel-name (sem espaços, caracteres especiais ou acentos...)"
+              placeholder="Ex.: channelname (sem espaços, caracteres especiais ou números)"
               classNames={classes}
               disabled={loading}
               rightSection={

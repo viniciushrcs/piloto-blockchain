@@ -1,4 +1,4 @@
-import { executeCommand } from './helpers/helpers';
+import { executeCommand, generateRandomId } from './helpers/helpers';
 import { updateConfigtx } from './helpers/update-configtx';
 
 export async function kind() {
@@ -100,19 +100,19 @@ export async function chaincodeQuery(specs, selectedOrganization = null) {
   );
 
   if (selectedOrganization) {
-    await executeCommand([
+    const result = await executeCommand([
       `../network chaincode query ${channelName} ${chaincodeName} '${chaincodeQueryCommandParsed}' ${ordererOrganization} ${selectedOrganization}`,
     ]);
+    return result;
   } else {
+    const results = [];
     const peerOrgsArgs = specs.peerOrganizations.map((org) => `${org.name}`);
-    const ret = [];
     for (const peerOrg of peerOrgsArgs) {
-      const response = await executeCommand([
+      const result = await executeCommand([
         `../network chaincode query ${channelName} ${chaincodeName} '${chaincodeQueryCommandParsed}' ${ordererOrganization} ${peerOrg}`,
       ]);
-      console.log(response);
-      ret.push(response);
+      results.push(result);
     }
-    return ret;
+    return results;
   }
 }

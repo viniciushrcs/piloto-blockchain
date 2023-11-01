@@ -10,7 +10,7 @@ export async function updateConfigtx(profileName: string, peerOrgs: string[]) {
   const data = { profileName, peerOrgs };
   const newProfile = ejs.render(template, data);
   const result = await fs.appendFile(
-    join(__dirname, '../../build/configtx.yaml'),
+    join(__dirname, `../../build/${process.env.NETWORK_NAME}/configtx.yaml`),
     '\n' + newProfile
   );
   console.log(result);
