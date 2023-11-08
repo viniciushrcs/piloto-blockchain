@@ -65,6 +65,26 @@ class FabricNetworkApi {
     }
   }
 
+  async checkNetworkStatus() {
+    try {
+      const response = await api.get('/check-network-status');
+      return response;
+    } catch (error) {
+      console.error('Erro ao obter o status:', error);
+      throw error;
+    }
+  }
+
+  async checkClusterStatus() {
+    try {
+      const response = await api.get('/check-cluster-status');
+      return response;
+    } catch (error) {
+      console.error('Erro ao obter o status:', error);
+      throw error;
+    }
+  }
+
   async executeChaincode() {
     try {
       //todo remover esse hardcode

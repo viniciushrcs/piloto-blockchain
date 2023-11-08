@@ -136,6 +136,10 @@ export default function Index() {
 
   const [loading, setLoading] = useState(false);
 
+  const [payload, setPayload] = useState<StartNetworkPayload | null>(null);
+
+  const [checkNetworkStatus, setCheckNetworkStatus] = useState(false);
+
   const step1Form = useForm<InitialFormData>({
     initialValues: {
       platform: ''
@@ -280,12 +284,14 @@ export default function Index() {
       peerOrganizations: formattedParticipants
     };
 
+    setPayload(payload);
+
     const { data, status } = await FabricNetworkApiInstance.startCluster();
 
     if (status === StatusCodes.ACCEPTED) {
       setTimeout(() => {
         notifications.show({
-          title: 'Iniciado criação da rede',
+          title: 'Iniciando cluster',
           message: data,
           color: 'green',
           icon: <IconTextPlus size={20} />,
@@ -293,7 +299,7 @@ export default function Index() {
         });
       }, 5000);
 
-      await FabricNetworkApiInstance.createFabricNetwork(payload);
+      // await FabricNetworkApiInstance.createFabricNetwork(payload);
     }
   };
 
@@ -307,30 +313,67 @@ export default function Index() {
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
 
+    const statusNetwork = async () => {
+      const {
+        data: { inProgress, message, networkId }
+      } = await FabricNetworkApiInstance.checkNetworkStatus();
+
+      console.log('inProgress', inProgress);
+      console.log('message', message);
+      console.log('networkId', networkId);
+
+      if (!inProgress && message === 'Erro') {
+        clearInterval(intervalId);
+
+        setLoading(false);
+        setStatus('Erro');
+        return;
+      }
+
+      if (!inProgress) {
+        clearInterval(intervalId);
+
+        setProgress(100);
+        setLoading(false);
+        setStep(STEP_COMPLETED + 1);
+        setStatus('Sucesso');
+      }
+    };
+
+    if (checkNetworkStatus) {
+      intervalId = setInterval(statusNetwork, 10000);
+    }
+
+    return () => clearInterval(intervalId);
+  }, [checkNetworkStatus]);
+
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+
     const getStatusAndHandle = async () => {
       try {
         const {
           data: { inProgress, message }
-        } = await FabricNetworkApiInstance.getStatus();
+        } = await FabricNetworkApiInstance.checkClusterStatus();
 
         if (inProgress && message === TASK_STATUS.GENERATING_ARTIFACTS) {
           setStatus('Gerando artefatos');
-          setProgress(25);
+          setProgress(10);
         }
 
         if (inProgress && message === TASK_STATUS.STARTING_KING) {
           setStatus('Iniciando rede');
-          setProgress(33);
+          setProgress(21);
         }
 
         if (inProgress && message === TASK_STATUS.STARTING_CLUSTER) {
           setStatus('Iniciando cluster');
-          setProgress(66);
+          setProgress(30);
         }
 
         if (inProgress && message === TASK_STATUS.CONFIGURING_NETWORK) {
           setStatus('Configurando a rede');
-          setProgress(94);
+          setProgress(42);
         }
 
         if (!inProgress && message === 'Erro') {
@@ -344,10 +387,34 @@ export default function Index() {
         if (!inProgress) {
           clearInterval(intervalId);
 
-          setProgress(100);
-          setLoading(false);
-          setStep(STEP_COMPLETED + 1);
-          setStatus('Sucesso');
+          setProgress(50);
+          // setLoading(false);
+          // setStep(STEP_COMPLETED + 1);
+          // setStatus('Sucesso');
+
+          if (payload) {
+            const { data, status } =
+              await FabricNetworkApiInstance.createFabricNetwork(payload);
+
+            if (status === StatusCodes.OK) {
+              setTimeout(() => {
+                notifications.show({
+                  title: 'Iniciando criação da rede',
+                  message: data,
+                  color: 'green',
+                  icon: <IconTextPlus size={20} />,
+                  autoClose: 5000
+                });
+              }, 5000);
+
+              setCheckNetworkStatus(true);
+
+              console.log('data', data);
+              console.log('status', status);
+            }
+
+            // TODO: Tratar erro / else
+          }
         }
       } catch (error) {
         // Tratar erros aqui, se necessário
@@ -359,7 +426,7 @@ export default function Index() {
     }
 
     return () => clearInterval(intervalId);
-  }, [step, flagRetry, setNetworks]);
+  }, [step, flagRetry, payload, setNetworks]);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
