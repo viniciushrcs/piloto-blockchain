@@ -682,7 +682,7 @@ export default function Networks() {
                 >
                   <div className="flex justify-between">
                     <Title order={6} color="gray">
-                      ID: {network.id}
+                      ID: {network.networkId}
                     </Title>
                     <Button
                       color="blue"

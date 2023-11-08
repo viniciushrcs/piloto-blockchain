@@ -102,7 +102,7 @@ type Data = InitialFormData | OrgFormData;
 export default function Index() {
   const { classes } = useStyles();
 
-  const { setNetworks } = useNetworkStore();
+  const { setNetworks, updateNetworkId } = useNetworkStore();
 
   const TRY_AGAING = true;
 
@@ -139,6 +139,8 @@ export default function Index() {
   const [payload, setPayload] = useState<StartNetworkPayload | null>(null);
 
   const [checkNetworkStatus, setCheckNetworkStatus] = useState(false);
+
+  const [localNetworkId, setLocalNetworkId] = useState(0);
 
   const step1Form = useForm<InitialFormData>({
     initialValues: {
@@ -270,8 +272,12 @@ export default function Index() {
 
     setStartTime(new Date());
 
+    const networkId = Math.floor(Math.random() * 1000000);
+
+    setLocalNetworkId(networkId);
+
     const network = {
-      id: Math.floor(Math.random() * 1000000),
+      id: networkId,
       organizations: participants
     };
 
@@ -298,8 +304,6 @@ export default function Index() {
           autoClose: 5000
         });
       }, 5000);
-
-      // await FabricNetworkApiInstance.createFabricNetwork(payload);
     }
   };
 
@@ -318,9 +322,7 @@ export default function Index() {
         data: { inProgress, message, networkId }
       } = await FabricNetworkApiInstance.checkNetworkStatus();
 
-      console.log('inProgress', inProgress);
-      console.log('message', message);
-      console.log('networkId', networkId);
+      updateNetworkId(localNetworkId, networkId);
 
       if (!inProgress && message === 'Erro') {
         clearInterval(intervalId);
@@ -345,7 +347,7 @@ export default function Index() {
     }
 
     return () => clearInterval(intervalId);
-  }, [checkNetworkStatus]);
+  }, [checkNetworkStatus, localNetworkId, updateNetworkId]);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
@@ -358,22 +360,22 @@ export default function Index() {
 
         if (inProgress && message === TASK_STATUS.GENERATING_ARTIFACTS) {
           setStatus('Gerando artefatos');
-          setProgress(10);
+          setProgress(11);
         }
 
         if (inProgress && message === TASK_STATUS.STARTING_KING) {
           setStatus('Iniciando rede');
-          setProgress(21);
+          setProgress(33);
         }
 
         if (inProgress && message === TASK_STATUS.STARTING_CLUSTER) {
           setStatus('Iniciando cluster');
-          setProgress(30);
+          setProgress(60);
         }
 
         if (inProgress && message === TASK_STATUS.CONFIGURING_NETWORK) {
           setStatus('Configurando a rede');
-          setProgress(42);
+          setProgress(72);
         }
 
         if (!inProgress && message === 'Erro') {
