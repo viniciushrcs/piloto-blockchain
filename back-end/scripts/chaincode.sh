@@ -334,7 +334,7 @@ function launch_chaincode_service() {
   local cc_image=$5
   push_fn "Launching chaincode container \"${cc_image}\""
 
-  cat kube/${org}/${org}-cc-template.yaml \
+  cat kube/${NETWORK_NAME}/${org}/${org}-cc-template.yaml \
     | sed 's,{{CHAINCODE_NAME}},'${cc_name}',g' \
     | sed 's,{{CHAINCODE_ID}},'${cc_id}',g' \
     | sed 's,{{CHAINCODE_IMAGE}},'${cc_image}',g' \

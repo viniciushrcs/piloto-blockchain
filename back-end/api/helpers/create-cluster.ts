@@ -5,14 +5,13 @@ export const clusterStatus = {
   message: '',
 };
 
-export async function processNetwork() {
+export async function createCluster() {
   try {
     clusterStatus.inProgress = true;
 
     clusterStatus.message = 'Iniciando o KIND';
     await kind();
     console.log('\n');
-
     clusterStatus.message = 'Iniciando o cluster';
     await cluster();
     console.log('\n');
