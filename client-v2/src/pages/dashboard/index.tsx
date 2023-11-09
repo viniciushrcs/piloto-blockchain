@@ -398,7 +398,7 @@ export default function Index() {
             const { data, status } =
               await FabricNetworkApiInstance.createFabricNetwork(payload);
 
-            if (status === StatusCodes.OK) {
+            if (status === StatusCodes.ACCEPTED) {
               setTimeout(() => {
                 notifications.show({
                   title: 'Iniciando criação da rede',
@@ -410,9 +410,6 @@ export default function Index() {
               }, 5000);
 
               setCheckNetworkStatus(true);
-
-              console.log('data', data);
-              console.log('status', status);
             }
 
             // TODO: Tratar erro / else
