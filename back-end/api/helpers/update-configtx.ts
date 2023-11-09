@@ -1,6 +1,7 @@
 import ejs from 'ejs';
 import { promises as fs } from 'fs';
 import { join } from 'path';
+import { getNetworkName } from './networkName';
 
 export async function updateConfigtx(profileName: string, peerOrgs: string[]) {
   const template = await fs.readFile(
@@ -10,7 +11,7 @@ export async function updateConfigtx(profileName: string, peerOrgs: string[]) {
   const data = { profileName, peerOrgs };
   const newProfile = ejs.render(template, data);
   const result = await fs.appendFile(
-    join(__dirname, `../../build/${process.env.NETWORK_NAME}/configtx.yaml`),
+    join(__dirname, `../../build/${getNetworkName()}/configtx.yaml`),
     '\n' + newProfile
   );
   console.log(result);

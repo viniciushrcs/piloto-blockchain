@@ -1,3 +1,4 @@
+import { getNetworkName } from '../helpers/networkName';
 import {
   CommonFileNames,
   OrdFilesNames,
@@ -44,15 +45,15 @@ export const templateFolders = {
 };
 
 export const destinationOrdFolders = (ORD_ORG): DestinationOrdFolders => ({
-  dest_dir_config_orderer: `${__dirname}/../../config/${process.env.NETWORK_NAME}/${ORD_ORG}`,
-  dest_dir_orderer_org: `${__dirname}/../../kube/${process.env.NETWORK_NAME}/${ORD_ORG}`,
+  dest_dir_config_orderer: `${__dirname}/../../config/${getNetworkName()}/${ORD_ORG}`,
+  dest_dir_orderer_org: `${__dirname}/../../kube/${getNetworkName()}/${ORD_ORG}`,
 });
 
 export const destinationCommonFolder = (): DestinationCommonFolder => ({
-  dest_dir_pvc: `${__dirname}/../../kube/${process.env.NETWORK_NAME}/`,
+  dest_dir_pvc: `${__dirname}/../../kube/${getNetworkName()}/`,
 });
 
 export const destinationPeerFolders = (PEER_ORG): DestinationPeerFolders => ({
-  dest_dir_config_peer: `${__dirname}/../../config/${process.env.NETWORK_NAME}/${PEER_ORG}`,
-  dest_dir_peer_org: `${__dirname}/../../kube/${process.env.NETWORK_NAME}/${PEER_ORG}`,
+  dest_dir_config_peer: `${__dirname}/../../config/${getNetworkName()}/${PEER_ORG}`,
+  dest_dir_peer_org: `${__dirname}/../../kube/${getNetworkName()}/${PEER_ORG}`,
 });
