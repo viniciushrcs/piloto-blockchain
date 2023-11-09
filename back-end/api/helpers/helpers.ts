@@ -1,10 +1,5 @@
 import fs from 'fs';
 import { spawn } from 'child_process';
-import { v4 as uuidv4 } from 'uuid';
-
-export function generateRandomId() {
-  return uuidv4();
-}
 
 export function logging_init() {
   const logStream = fs.createWriteStream('./src/network.log', { flags: 'w' });

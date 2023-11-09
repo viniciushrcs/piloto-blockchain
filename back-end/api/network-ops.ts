@@ -1,4 +1,4 @@
-import { executeCommand, generateRandomId } from './helpers/helpers';
+import { executeCommand } from './helpers/helpers';
 import { updateConfigtx } from './helpers/update-configtx';
 
 export async function kind() {
@@ -111,7 +111,7 @@ export async function chaincodeQuery(specs, selectedOrganization = null) {
       const result = await executeCommand([
         `../network chaincode query ${channelName} ${chaincodeName} '${chaincodeQueryCommandParsed}' ${ordererOrganization} ${peerOrg}`,
       ]);
-      results.push(result);
+      results.push(JSON.parse(result));
     }
     return results;
   }
