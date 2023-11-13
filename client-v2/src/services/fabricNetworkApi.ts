@@ -19,9 +19,18 @@ class FabricNetworkApi {
     }
   }
 
-  async startNetwork(payload: StartNetworkPayload) {
+  async startCluster() {
     try {
-      return await api.post('/start-network', payload);
+      return await api.post('/start-cluster');
+    } catch (error) {
+      console.error('Erro ao iniciar a rede:', error);
+      throw error;
+    }
+  }
+
+  async createFabricNetwork(payload: StartNetworkPayload) {
+    try {
+      return await api.post('/create-fabric-network', payload);
     } catch (error) {
       console.error('Erro ao iniciar a rede:', error);
       throw error;
@@ -49,6 +58,26 @@ class FabricNetworkApi {
   async getStatus() {
     try {
       const response = await api.get('/check-status');
+      return response;
+    } catch (error) {
+      console.error('Erro ao obter o status:', error);
+      throw error;
+    }
+  }
+
+  async checkNetworkStatus() {
+    try {
+      const response = await api.get('/check-network-status');
+      return response;
+    } catch (error) {
+      console.error('Erro ao obter o status:', error);
+      throw error;
+    }
+  }
+
+  async checkClusterStatus() {
+    try {
+      const response = await api.get('/check-cluster-status');
       return response;
     } catch (error) {
       console.error('Erro ao obter o status:', error);

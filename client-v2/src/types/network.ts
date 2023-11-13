@@ -4,6 +4,7 @@ import { OrgFormData } from './orgFormData';
 
 export type Network = {
   id: number;
+  networkId?: string;
   organizations: OrgFormData[];
   channels?: Channel[];
   chainCodes?: ChainCode[];
