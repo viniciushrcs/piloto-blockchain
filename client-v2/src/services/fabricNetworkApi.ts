@@ -85,27 +85,13 @@ class FabricNetworkApi {
     }
   }
 
-  async executeChaincode() {
+  async executeChaincode(payload: unknown, networkId: string) {
     try {
-      //todo remover esse hardcode
-      const payload = {
-        ordererOrganization: 'org0',
-        peerOrganizations: [
-          {
-            name: 'org1',
-            peers: ['peer1']
-          }
-        ],
-        channelName: 'channelname',
-        chaincodeName: 'asset-transfer-basic',
-        chaincodePath: 'chaincode-typescript',
-        chaincodeCommand: {
-          init: {
-            Args: ['InitLedger']
-          }
-        }
-      };
-      const response = await api.post('/execute-chaincode', payload);
+      const response = await api.post(
+        `${networkId}/execute-chaincode`,
+        payload
+      );
+
       return response;
     } catch (error) {
       console.error('Erro ao obter o status:', error);
