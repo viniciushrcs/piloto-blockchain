@@ -206,7 +206,8 @@ export default function Networks() {
       formData.append('chaincodeName', 'chaincode-typescript');
 
       const response = await FabricNetworkApiInstance.deployChaincode(
-        formData as any
+        formData as any,
+        network?.networkId as string
       );
 
       status = response.status;
@@ -219,7 +220,8 @@ export default function Networks() {
       formData.append('chaincodeName', values.params);
 
       const response = await FabricNetworkApiInstance.deployChaincode(
-        formData as any
+        formData as any,
+        network?.networkId as string
       );
 
       status = response.status;
@@ -284,7 +286,10 @@ export default function Networks() {
       peerOrganizations
     };
 
-    const { status } = await FabricNetworkApiInstance.createChannel(payload);
+    const { status } = await FabricNetworkApiInstance.createChannel(
+      payload,
+      network?.networkId as string
+    );
 
     if (status === StatusCodes.OK) {
       const networkId = network?.id as number;

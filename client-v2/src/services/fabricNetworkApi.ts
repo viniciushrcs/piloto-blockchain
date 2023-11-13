@@ -37,18 +37,18 @@ class FabricNetworkApi {
     }
   }
 
-  async createChannel(payload: CreateChannelPayload) {
+  async createChannel(payload: CreateChannelPayload, networkId: string) {
     try {
-      return await api.post('/create-channel', payload);
+      return await api.post(`${networkId}/create-channel`, payload);
     } catch (error) {
       console.error('Erro ao criar canal:', error);
       throw error;
     }
   }
 
-  async deployChaincode(payload: DeployChaincodePayload) {
+  async deployChaincode(payload: DeployChaincodePayload, networkId: string) {
     try {
-      return await api.post('/deploy-chaincode', payload);
+      return await api.post(`${networkId}/deploy-chaincode`, payload);
     } catch (error) {
       console.error('Erro ao implantar chaincode', error);
       throw error;
