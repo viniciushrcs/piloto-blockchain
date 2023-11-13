@@ -51,6 +51,8 @@ import { OrgFormData } from '@/types/orgFormData';
 import { useNetworkStore } from '@/stores/network';
 import { applyNamingPattern } from '@/utils/applyNamingPattern';
 import { convertParticipants } from '@/utils/convertParticipants';
+import { getOrderingOrganization } from '@/utils/getOrderingOrganization';
+import { StatusCodes } from 'http-status-codes';
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -100,7 +102,7 @@ type Data = InitialFormData | OrgFormData;
 export default function Index() {
   const { classes } = useStyles();
 
-  const { setNetworks } = useNetworkStore();
+  const { setNetworks, updateNetworkId } = useNetworkStore();
 
   const TRY_AGAING = true;
 
@@ -133,6 +135,12 @@ export default function Index() {
   const [elapsedTime, setElapsedTime] = useState(0);
 
   const [loading, setLoading] = useState(false);
+
+  const [payload, setPayload] = useState<StartNetworkPayload | null>(null);
+
+  const [checkNetworkStatus, setCheckNetworkStatus] = useState(false);
+
+  const [localNetworkId, setLocalNetworkId] = useState(0);
 
   const step1Form = useForm<InitialFormData>({
     initialValues: {
@@ -264,8 +272,12 @@ export default function Index() {
 
     setStartTime(new Date());
 
+    const networkId = Math.floor(Math.random() * 1000000);
+
+    setLocalNetworkId(networkId);
+
     const network = {
-      id: Math.floor(Math.random() * 1000000),
+      id: networkId,
       organizations: participants
     };
 
@@ -274,14 +286,25 @@ export default function Index() {
     const formattedParticipants = convertParticipants(participants);
 
     const payload: StartNetworkPayload = {
-      ordererOrganization:
-        participants.filter(
-          (participant) => participant.hasOrderingNode == 1
-        )[0]?.name || '',
+      ordererOrganization: getOrderingOrganization(participants),
       peerOrganizations: formattedParticipants
     };
 
-    await FabricNetworkApiInstance.startNetwork(payload);
+    setPayload(payload);
+
+    const { data, status } = await FabricNetworkApiInstance.startCluster();
+
+    if (status === StatusCodes.ACCEPTED) {
+      setTimeout(() => {
+        notifications.show({
+          title: 'Iniciando cluster',
+          message: data,
+          color: 'green',
+          icon: <IconTextPlus size={20} />,
+          autoClose: 5000
+        });
+      }, 5000);
+    }
   };
 
   const handleReset = (step: number = STEP_PLATFORM_DEFINITION) => {
@@ -294,30 +317,68 @@ export default function Index() {
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
 
+    const statusNetwork = async () => {
+      const {
+        data: { inProgress, message, networkId }
+      } = await FabricNetworkApiInstance.checkNetworkStatus();
+
+      setProgress((prev) => (prev < 100 ? prev + 1 : prev));
+
+      if (!inProgress && message === 'Erro') {
+        clearInterval(intervalId);
+
+        setLoading(false);
+        setStatus('Erro');
+        return;
+      }
+
+      if (!inProgress && networkId !== '') {
+        clearInterval(intervalId);
+
+        updateNetworkId(localNetworkId, networkId);
+        setProgress(100);
+        setLoading(false);
+        setStep(STEP_COMPLETED + 1);
+        setStatus('Sucesso');
+      }
+    };
+
+    if (checkNetworkStatus) {
+      intervalId = setInterval(statusNetwork, 10000);
+    }
+
+    return () => clearInterval(intervalId);
+  }, [checkNetworkStatus, localNetworkId, updateNetworkId]);
+
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+
     const getStatusAndHandle = async () => {
       try {
         const {
           data: { inProgress, message }
-        } = await FabricNetworkApiInstance.getStatus();
+        } = await FabricNetworkApiInstance.checkClusterStatus();
+
+        let random = Math.floor(Math.random() * 5) + 1;
 
         if (inProgress && message === TASK_STATUS.GENERATING_ARTIFACTS) {
           setStatus('Gerando artefatos');
-          setProgress(25);
+          setProgress((prev) => (prev < 100 ? prev + random : prev));
         }
 
         if (inProgress && message === TASK_STATUS.STARTING_KING) {
           setStatus('Iniciando rede');
-          setProgress(33);
+          setProgress((prev) => (prev < 100 ? prev + random : prev));
         }
 
         if (inProgress && message === TASK_STATUS.STARTING_CLUSTER) {
           setStatus('Iniciando cluster');
-          setProgress(66);
+          setProgress((prev) => (prev < 100 ? prev + random : prev));
         }
 
         if (inProgress && message === TASK_STATUS.CONFIGURING_NETWORK) {
           setStatus('Configurando a rede');
-          setProgress(94);
+          setProgress((prev) => (prev < 100 ? prev + random : prev));
         }
 
         if (!inProgress && message === 'Erro') {
@@ -331,10 +392,31 @@ export default function Index() {
         if (!inProgress) {
           clearInterval(intervalId);
 
-          setProgress(100);
-          setLoading(false);
-          setStep(STEP_COMPLETED + 1);
-          setStatus('Sucesso');
+          setProgress((prev) => (prev < 100 ? prev + random : prev));
+          // setLoading(false);
+          // setStep(STEP_COMPLETED + 1);
+          // setStatus('Sucesso');
+
+          if (payload) {
+            const { data, status } =
+              await FabricNetworkApiInstance.createFabricNetwork(payload);
+
+            if (status === StatusCodes.ACCEPTED) {
+              setTimeout(() => {
+                notifications.show({
+                  title: 'Iniciando criação da rede',
+                  message: data,
+                  color: 'green',
+                  icon: <IconTextPlus size={20} />,
+                  autoClose: 5000
+                });
+              }, 5000);
+
+              setCheckNetworkStatus(true);
+            }
+
+            // TODO: Tratar erro / else
+          }
         }
       } catch (error) {
         // Tratar erros aqui, se necessário
@@ -346,7 +428,7 @@ export default function Index() {
     }
 
     return () => clearInterval(intervalId);
-  }, [step, flagRetry, setNetworks]);
+  }, [step, flagRetry, payload, setNetworks]);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
@@ -575,7 +657,10 @@ export default function Index() {
               onChange={(event) => {
                 const { value } = event.currentTarget;
 
-                step2Form.setFieldValue('name', applyNamingPattern(value));
+                step2Form.setFieldValue(
+                  'name',
+                  applyNamingPattern(value, 'withNumbers')
+                );
               }}
               value={step2Form.values.name}
               error={step2Form.errors.name}

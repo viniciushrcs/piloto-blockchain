@@ -1,6 +1,7 @@
 export const DASHBOARD_PATH = '/dashboard';
 export const SETTINGS_PATH = `${DASHBOARD_PATH}/settings`;
 export const NETWORKS_PATH = `${DASHBOARD_PATH}/networks`;
+
 export const TASK_STATUS = {
   GENERATING_ARTIFACTS: 'Gerando artefatos',
   STARTING_KING: 'Iniciando o KIND',
@@ -9,3 +10,5 @@ export const TASK_STATUS = {
   // CREATING_CHANNEL: 'Criando canal',
   // DEPLOYING_CHAINCODE: 'Implantando chaincode',
 };
+
+export const ORDERING_ORGANIZATION = 1;

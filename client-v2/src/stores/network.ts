@@ -10,6 +10,8 @@ import { persist } from 'zustand/middleware';
 type State = {
   networks: Network[];
   setNetworks: (networks: Network[]) => void;
+  updateNetwork: (network: Network) => void;
+  updateNetworkId: (id: number, networkId: string) => void;
   getNetwork: (id: number) => Network | undefined;
   setChannel: (
     networkId: number,
@@ -27,6 +29,33 @@ export const useNetworkStore = create<State>()(
       networks: [] as Network[],
       setNetworks: (networks) => {
         set(() => ({ networks: [...get().networks, ...networks] }));
+      },
+      updateNetwork: (network) => {
+        const { networks } = get();
+
+        const updatedNetworks = networks.map((n) => {
+          if (n.id === network.id) {
+            return network;
+          }
+          return n;
+        });
+
+        set(() => ({ networks: updatedNetworks }));
+      },
+      updateNetworkId: (id, networkId) => {
+        const { networks } = get();
+
+        const updatedNetworks = networks.map((n) => {
+          if (n.id === id) {
+            return {
+              ...n,
+              networkId
+            };
+          }
+          return n;
+        });
+
+        set(() => ({ networks: updatedNetworks }));
       },
       getNetwork: (id) => {
         const { networks } = get();
