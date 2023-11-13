@@ -322,7 +322,7 @@ export default function Index() {
         data: { inProgress, message, networkId }
       } = await FabricNetworkApiInstance.checkNetworkStatus();
 
-      updateNetworkId(localNetworkId, networkId);
+      setProgress((prev) => (prev < 100 ? prev + 1 : prev));
 
       if (!inProgress && message === 'Erro') {
         clearInterval(intervalId);
@@ -332,9 +332,10 @@ export default function Index() {
         return;
       }
 
-      if (!inProgress) {
+      if (!inProgress && networkId !== '') {
         clearInterval(intervalId);
 
+        updateNetworkId(localNetworkId, networkId);
         setProgress(100);
         setLoading(false);
         setStep(STEP_COMPLETED + 1);
@@ -358,24 +359,26 @@ export default function Index() {
           data: { inProgress, message }
         } = await FabricNetworkApiInstance.checkClusterStatus();
 
+        let random = Math.floor(Math.random() * 5) + 1;
+
         if (inProgress && message === TASK_STATUS.GENERATING_ARTIFACTS) {
           setStatus('Gerando artefatos');
-          setProgress(11);
+          setProgress((prev) => (prev < 100 ? prev + random : prev));
         }
 
         if (inProgress && message === TASK_STATUS.STARTING_KING) {
           setStatus('Iniciando rede');
-          setProgress(33);
+          setProgress((prev) => (prev < 100 ? prev + random : prev));
         }
 
         if (inProgress && message === TASK_STATUS.STARTING_CLUSTER) {
           setStatus('Iniciando cluster');
-          setProgress(60);
+          setProgress((prev) => (prev < 100 ? prev + random : prev));
         }
 
         if (inProgress && message === TASK_STATUS.CONFIGURING_NETWORK) {
           setStatus('Configurando a rede');
-          setProgress(72);
+          setProgress((prev) => (prev < 100 ? prev + random : prev));
         }
 
         if (!inProgress && message === 'Erro') {
@@ -389,7 +392,7 @@ export default function Index() {
         if (!inProgress) {
           clearInterval(intervalId);
 
-          setProgress(50);
+          setProgress((prev) => (prev < 100 ? prev + random : prev));
           // setLoading(false);
           // setStep(STEP_COMPLETED + 1);
           // setStatus('Sucesso');
