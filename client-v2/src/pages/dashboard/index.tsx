@@ -118,7 +118,7 @@ export default function Index() {
 
   const [data, setData] = useState<Data | null>(null);
 
-  const [buttonName, setButtonName] = useState('Adicionar participante');
+  const [buttonName, setButtonName] = useState('Adicionar este participante');
 
   const [participants, setParticipants] = useState<OrgFormData[]>([]);
 
