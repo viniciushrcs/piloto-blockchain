@@ -16,7 +16,9 @@ import {
   Tooltip,
   MultiSelect,
   Select,
-  FileInput
+  FileInput,
+  Checkbox,
+  JsonInput
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useNetworkStore } from '@/stores/network';
@@ -92,6 +94,7 @@ type ChainCode = {
   params: string;
   channel: string;
   file: File | undefined;
+  initLedger?: boolean;
 };
 
 type ChainCodeParams = {
@@ -127,6 +130,8 @@ export default function Networks() {
   const [chainCodeLoading, setChainCodeLoading] = useState(false);
 
   const [executeChainCodeLoading, setExecuteChainCodeLoading] = useState(false);
+
+  const [resultChainCode, setResultChainCode] = useState<string | null>(null);
 
   const [optionPropsOrgs, setOptionPropsOrgs] = useState<OptionProps[]>([]);
 
@@ -196,6 +201,7 @@ export default function Networks() {
 
   const handleCancelExecuteChainCode = () => {
     setExecuteChainCode(false);
+    setResultChainCode(null);
 
     chainCodeParamsForm.reset();
   };
@@ -282,6 +288,43 @@ export default function Networks() {
         icon: <IconTextPlus size={20} />,
         autoClose: 5000
       });
+
+      if (values.initLedger) {
+        const payload = {
+          ordererOrganization,
+          peerOrganizations,
+          channelName: values.channel,
+          chaincodeName: values.params,
+          chaincodeCommand: {
+            init: {
+              Args: ['InitLedger']
+            }
+          }
+        };
+
+        const { status } = await FabricNetworkApiInstance.executeChaincode(
+          payload,
+          network?.networkId as string
+        );
+
+        if (status === StatusCodes.ACCEPTED) {
+          notifications.show({
+            title: 'Chaincode executado com sucesso!',
+            message: `O comando InitLedger foi executado com sucesso`,
+            color: 'green',
+            icon: <IconTextPlus size={20} />,
+            autoClose: 5000
+          });
+        } else {
+          notifications.show({
+            title: 'Erro ao executar chaincode!',
+            message: `Ocorreu um erro ao executar o chaincode`,
+            color: 'red',
+            icon: <IconSquareX size={20} />,
+            autoClose: 5000
+          });
+        }
+      }
     } else {
       notifications.show({
         title: 'Erro ao criar canal!',
@@ -320,7 +363,7 @@ export default function Networks() {
         channelName,
         chaincodeName,
         chaincodeCommand: {
-          init: {
+          query: {
             Args: values.params.includes(',')
               ? values.params.split(',').map((arg) => arg.trim())
               : [values.params.trim()]
@@ -328,7 +371,7 @@ export default function Networks() {
         }
       };
 
-      const { status } = await FabricNetworkApiInstance.executeChaincode(
+      const { data, status } = await FabricNetworkApiInstance.executeChaincode(
         payload,
         network?.networkId as string
       );
@@ -341,6 +384,8 @@ export default function Networks() {
           icon: <IconTextPlus size={20} />,
           autoClose: 5000
         });
+
+        setResultChainCode(JSON.stringify(data));
       } else {
         notifications.show({
           title: 'Erro ao executar chaincode!',
@@ -363,24 +408,6 @@ export default function Networks() {
     } finally {
       setExecuteChainCodeLoading(false);
     }
-
-    // const payload = {
-    //   ordererOrganization: 'org0',
-    //   peerOrganizations: [
-    //     {
-    //       name: 'org1',
-    //       peers: ['peer1']
-    //     }
-    //   ],
-    //   channelName: 'channelname',
-    //   chaincodeName: 'asset-transfer-basic',
-    //   chaincodePath: 'chaincode-typescript',
-    //   chaincodeCommand: {
-    //     init: {
-    //       Args: ['InitLedger']
-    //     }
-    //   }
-    // };
   };
 
   const onSubmitChannel = async (values: Channel) => {
@@ -736,6 +763,11 @@ export default function Networks() {
             className="space-y-4"
           >
             <Title order={6}>Definição de um novo chaincode</Title>
+            <Checkbox
+              disabled={chainCodeLoading}
+              label="Executar comando `InitLedger` após a implementação do chaincode"
+              {...chainCodeForm.getInputProps('initLedger')}
+            />
             <Select
               disabled={chainCodeLoading}
               data={optionPropsChannels}
@@ -815,6 +847,17 @@ export default function Networks() {
             className="mt-2 space-y-4"
           >
             <Title order={6}>Definição de um ou mais parâmetros</Title>
+            {resultChainCode && (
+              <JsonInput
+                formatOnBlur
+                autosize
+                minRows={4}
+                disabled={executeChainCodeLoading}
+                label="Resultado da execução"
+                value={resultChainCode}
+                onChange={setResultChainCode}
+              />
+            )}
             <Select
               disabled={executeChainCodeLoading}
               data={optionPropsChainCodes}
