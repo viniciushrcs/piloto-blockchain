@@ -96,6 +96,8 @@ type ChainCode = {
 
 type ChainCodeParams = {
   params: string;
+  channelName: string;
+  chaincodeName: string;
 };
 
 export default function Networks() {
@@ -132,6 +134,10 @@ export default function Networks() {
     []
   );
 
+  const [optionPropsChainCodes, setOptionPropsChainCodes] = useState<
+    OptionProps[]
+  >([]);
+
   const channelForm = useForm<Channel>({
     initialValues: {
       name: '',
@@ -156,10 +162,14 @@ export default function Networks() {
 
   const chainCodeParamsForm = useForm<ChainCodeParams>({
     initialValues: {
-      params: ''
+      params: '',
+      channelName: '',
+      chaincodeName: ''
     },
     validate: {
-      params: hasLength({ min: 3 }, 'Você precisa informar o(s) parâmetro(s)')
+      params: hasLength({ min: 3 }, 'Você precisa informar o(s) parâmetro(s)'),
+      channelName: hasLength({ min: 3 }, 'Você precisa informar o canal'),
+      chaincodeName: hasLength({ min: 3 }, 'Você precisa informar o chaincode')
     }
   });
 
@@ -300,11 +310,9 @@ export default function Networks() {
         network?.organizations as Network['organizations']
       );
 
-      // TODO: Perguntar ao Vinicius como se dará o atributo channelName, já que atualmente ele é um array
-      const channelName = network?.channels?.[0]?.name as string;
+      const channelName = values.channelName;
 
-      // TODO: Perguntar ao Vinicius como se dará o atributo chaincodeName, já que atualmente ele é um array
-      const chaincodeName = network?.chainCodes?.[0]?.name as string;
+      const chaincodeName = values.chaincodeName;
 
       const payload = {
         ordererOrganization,
@@ -313,12 +321,12 @@ export default function Networks() {
         chaincodeName,
         chaincodeCommand: {
           init: {
-            Args: [values.params]
+            Args: values.params.includes(',')
+              ? values.params.split(',').map((arg) => arg.trim())
+              : [values.params.trim()]
           }
         }
       };
-
-      console.log(payload);
 
       const { status } = await FabricNetworkApiInstance.executeChaincode(
         payload,
@@ -480,6 +488,23 @@ export default function Networks() {
       );
     }
   }, [createChainCode, network]);
+
+  useEffect(() => {
+    if (executeChainCode && network?.chainCodes?.length) {
+      setOptionPropsChainCodes(
+        network?.chainCodes?.map((chainCode) => ({
+          label: chainCode.name,
+          value: chainCode.name
+        })) as OptionProps[]
+      );
+      setOptionPropsChannels(
+        network?.chainCodes?.map((chainCode) => ({
+          label: chainCode.channelName,
+          value: chainCode.channelName
+        })) as OptionProps[]
+      );
+    }
+  }, [executeChainCode, network]);
 
   return (
     <>
@@ -790,8 +815,27 @@ export default function Networks() {
             className="mt-2 space-y-4"
           >
             <Title order={6}>Definição de um ou mais parâmetros</Title>
+            <Select
+              disabled={executeChainCodeLoading}
+              data={optionPropsChainCodes}
+              searchable
+              placeholder="Selecione um chaincode"
+              label="Selecione um chaincode"
+              classNames={classes}
+              {...chainCodeParamsForm.getInputProps('chaincodeName')}
+            />
+            <Select
+              disabled={executeChainCodeLoading}
+              data={optionPropsChannels}
+              searchable
+              placeholder="Selecione um canal"
+              label="Selecione um canal"
+              classNames={classes}
+              {...chainCodeParamsForm.getInputProps('channelName')}
+            />
             <TextInput
               withAsterisk
+              disabled={executeChainCodeLoading}
               mb="md"
               label="Nome do parâmetro"
               placeholder="Ex.: InitLedger, ReadAsset, etc."
